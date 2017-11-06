@@ -3,7 +3,6 @@ const utils = require('../modules/utils');
 const fs = require('fs-extra-promise');
 const XmlStream = require('xml-stream');
 const xmljs = require('xml-js');
-const xmlbuilder = require('xmlbuilder');
 const Promise = require('bluebird');
 const exec = require('child-process-promise').execFile;
 const LineByLineReader = require('line-by-line');

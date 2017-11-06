@@ -52,8 +52,6 @@ var auth = {
 		var username = req.body.username || '';
 		var password = req.body.password || '';
 		
-		console.log('email: ' + email);
-		
 		if (email === '' || username === '' || password === '') {
 			res.status(401);
 			res.json({
@@ -68,7 +66,7 @@ var auth = {
 		
 		mysql.query('INSERT INTO users(email, name, password) VALUES(?,?,?)', [email, username, hash])
 			.then(function (result) {
-				console.log('id: ' + result.insertId);
+				console.log('Register user: ' + email + ' with Id ' + result.insertId);
 				
 				// Fire a query to your DB and check if the credentials are valid
 				return auth.validate(email, password);
