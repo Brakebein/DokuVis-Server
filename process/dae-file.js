@@ -413,15 +413,19 @@ function prepareNodes(nodes, parentid) {
 		n.matrix = matrix.toArray();
 
 		// if pivot offset is represented in extra node -> merge nodes
-		if (n.node && n.node[0] && (!n.node[0].$ || !n.node[0].$.id)) {
+		if (n.node && n.node[0] && (!n.node[0].$ || !n.node[0].$.id || /\$ColladaAutoName\$/.test(n.node[0].$.id))) {
 			var pivot = n.node[0];
-			m = pivot.matrix.split(/\s+/);
+
+			if (pivot.matrix instanceof Object && pivot.matrix.$text)
+				m = pivot.matrix.$text.split(/\s+/);
+			else
+				m = pivot.matrix.split(/\s+/);
 			var pivotMatrix = new THREE.Matrix4().set(
 				+m[0], +m[1], +m[2], +m[3],
 				+m[4], +m[5], +m[6], +m[7],
 				+m[8], +m[9], +m[10], +m[11],
 				+m[12], +m[13], +m[14], +m[15]);
-			n.matrix = pivotMatrix.multiply(matrix).toArray();
+			n.matrix = pivotMatrix.premultiply(matrix).toArray();
 
 			delete pivot.matrix;
 			delete n.node;
