@@ -1,13 +1,13 @@
 const utils = require('../modules/utils');
 const mysql = require('../modules/mysql-request');
 
-module.exports = function(role) {
+module.exports = function (role) {
 	return function (req, res, next) {
 
 		var user = req.headers['x-key'] || '';
 		var prj = req.params.id; //TODO: change id to prj
 
-		if (!(role instanceof Array)) role = [role];
+		if (!Array.isArray(role)) role = [role];
 
 		var roles = ['superadmin'];
 		if (role.indexOf('admin') !== -1) roles.push('admin');

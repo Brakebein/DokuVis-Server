@@ -64,30 +64,49 @@ FOREACH (s IN {screenshots} |
 	FOREACH (p in s.pins |
 		CREATE (screen)-[:P106]->(:E73 {content: p.id, targetId: p.targetId, screenIndex: p.screenIndex, pinMatrix: p.pinMatrix}) ) )
 
-RETURN e33.content AS id, e62.value AS value, e61.value AS date, userName.value AS author, type.content AS type
+RETURN e33.content AS id, e62.value AS value, e61.value AS date, userName.value AS author, type.content AS type;
 
 // get commentModel
-MATCH (tSs:E55 {content: "screenshot"}), (tUd:E55 {content: "userDrawing"})
-WITH tSs, tUd
-MATCH (:E55 {content: "commentType"})<-[:P127]-(type:E55)
+MATCH (tSs:E55 {content: "screenshot"}), (tUd:E55 {content: "userDrawing"}), (tCt:E55 {content: "commentType"})
+WITH tSs, tUd, tCt
+
+MATCH (e33:E33)-[:P2]->(type:E55)-[:P127]->(tCt)
 WHERE type.content <> "commentAnswer"
-MATCH (type)<-[:P2]-(e33:E33),
-(e33)-[:P3]->(text:E62),
-(e33)<-[:P94]-(e65:E65),
-	(e65)-[:P14]->(user:E21)-[:P131]->(userName:E82),
-	(e65)-[:P4]->(:E52)-[:P82]->(date:E61)
-OPTIONAL MATCH (e33)-[:P102]->(title:E35)
-OPTIONAL MATCH (e33)-[:P129]->(targets)
+MATCH (e33)-[:P129]->(targets)<-[:P15|L11*1..9]-(:E7 {content: $subproj}),
+			(e33)-[:P3]->(text:E62),
+			(e33)<-[:P94]-(e65:E65),
+			(e65)-[:P14]->(user:E21)-[:P131]->(userName:E82),
+			(e65)-[:P4]->(:E52)-[:P82]->(date:E61),
+			(e33)-[:P129]->(targets)
+
 OPTIONAL MATCH (e33)-[:P67]->(refs) WHERE NOT (refs)-[:P2]->(tSs)
 OPTIONAL MATCH (e33)<-[:P129]-(answer:E33)-[:P2]->(:E55 {content: "commentAnswer"})
-WITH e33, text, title, type, {id: user.content, name: userName.value } AS author, date.value AS date, collect(DISTINCT targets.content) AS targets, collect(DISTINCT refs.content) AS refs, count(answer) AS answerLength, tSs, tUd
+WITH e33, text, type,
+		 {id: user.content, name: userName.value, date: date.value } AS created,
+		 collect(DISTINCT targets.content) AS targets,
+		 collect(DISTINCT refs.content) AS refs,
+		 collect(DISTINCT targetFile) AS targetFile,
+		 count(answer) AS answerLength,
+		 tSs, tUd
+
 OPTIONAL MATCH (e33)-[:P67]->(screen:E36)-[:P2]->(tSs),
-	(screen)-[:P1]->(screenFile:E75),
-	(screen)-[:P106]->(paint:E36)-[:P2]->(tUd),
-	(paint)-[:P1]->(paintFile:E75)
-WITH e33, text, title, type, author, date, targets, refs, CASE WHEN count(screen) = 0 THEN [] ELSE collect({screenId: screen.content, cameraCenter: screen.cameraCenter, cameraFOV: screen.cameraFOV, cameraMatrix: screen.cameraMatrix, file: screenFile.content, path: screenFile.path, width: screenFile.width, height: screenFile.height, paint: {id: paint.content, file: paintFile.content, path: paintFile.path, width: paintFile.width, height: paintFile.height}}) END AS screenshots, screen, answerLength
+							 (screen)-[:P1]->(screenFile:E75),
+							 (screen)-[:P106]->(paint:E36)-[:P2]->(tUd),
+							 (paint)-[:P1]->(paintFile:E75)
+WITH e33, text, type, created, targets, refs, targetFile,
+		 CASE WHEN count(screen) = 0 THEN [] ELSE collect({screenId: screen.content, cameraCenter: screen.cameraCenter, cameraFOV: screen.cameraFOV, cameraMatrix: screen.cameraMatrix, file: screenFile.content, path: screenFile.path, thumb: screenFile.thumb, width: screenFile.width, height: screenFile.height, paint: {id: paint.content, file: paintFile.content, path: paintFile.path, width: paintFile.width, height: paintFile.height}}) END AS screenshots,
+		 screen, answerLength
 OPTIONAL MATCH (screen)-[:P106]->(pin:E73)
-RETURN e33.content AS eid, text.value AS text, title.value AS title, author, date, type.content AS type, targets AS targets, refs AS refs, screenshots, collect(DISTINCT pin) AS pins, answerLength
+RETURN e33.content AS eid,
+			 text.value AS text,
+			 created,
+			 type.content AS type,
+			 targets,
+			 refs,
+			 targetFile,
+			 screenshots,
+			 collect(DISTINCT pin) AS pins,
+			 answerLength;
 
 // OPTIONAL MATCH n
 // collect(DISTINCT n) --> NullPointerException
