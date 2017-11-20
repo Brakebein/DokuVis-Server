@@ -107,9 +107,10 @@ router.get('/auth/project/:prj/:subprj/source/:id/spatial', source.getSpatial);
 
 // comments
 const comment = require('./comment');
-router.get('/auth/project/:id/:subprj/comment', comment.query);
-router.post('/auth/project/:id/:subprj/comment', comment.create);
-router.get('/auth/project/:id/:subprj/comment/target/:targetId', comment.queryTarget);
+router.get('/auth/project/:prj/:subprj/comment', comment.query);
+router.get('/auth/project/:prj/:subprj/comment/:id', comment.get);
+router.post('/auth/project/:prj/:subprj/comment', comment.create);
+router.get('/auth/project/:prj/:subprj/comment/target/:id', comment.queryTarget);
 
 // graph
 const graph = require('./graph');

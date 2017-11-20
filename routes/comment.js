@@ -10,7 +10,7 @@ const uuid = require('uuid/v4');
 module.exports = {
 
 	query: function (req, res) {
-		var prj = req.params.id,
+		var prj = req.params.prj,
 			sub = req.params.subprj;
 
 		// target [:P15|P46|P9*1..9]
@@ -37,19 +37,25 @@ module.exports = {
 		// 	OPTIONAL MATCH (screen)-[:P106]->(pin:E73) \
 		// 	RETURN e33.content AS id, text.value AS text, title.value AS title, author, date, type.content AS type, targets AS targets, refs AS refs, screenshots, collect(DISTINCT pin) AS pins, answerLength';
 
+		// MATCH (e33:E33:`+prj+`)-[:P2]->(type:E55)-[:P127]->(tCt)
+		// WHERE type.content <> "commentAnswer"
+		// MATCH (e33)-[:P129]->(targets)<-[:P15|L11*1..9]-(:E7 {content: $subproj}),
+		// (e33)-[:P3]->(text:E62),
+		// (e33)<-[:P94]-(e65:E65),
+		// (e65)-[:P14]->(user:E21)-[:P131]->(userName:E82),
+		// (e65)-[:P4]->(:E52)-[:P82]->(date:E61)
+
 		// noinspection JSAnnotator
 		var q = `
 			MATCH (tSs:E55:`+prj+` {content: "screenshot"}), (tUd:E55:`+prj+` {content: "userDrawing"}), (tCt:E55:`+prj+` {content: "commentType"})
 			WITH tSs, tUd, tCt
 			
-			MATCH (e33:E33:`+prj+`)-[:P2]->(type:E55)-[:P127]->(tCt)
+			MATCH (:E7:`+prj+` {content: $subproj})-[:P15|L11*1..9]->(target)<-[:P129]-(e33:E33)-[:P2]->(type:E55)-[:P127]->(tCt)
 			WHERE type.content <> "commentAnswer"
-			MATCH (e33)-[:P129]->(targets)<-[:P15|L11*1..9]-(:E7 {content: $subproj}),
-				(e33)-[:P3]->(text:E62),
+			MATCH (e33)-[:P3]->(text:E62),
 				(e33)<-[:P94]-(e65:E65),
 				(e65)-[:P14]->(user:E21)-[:P131]->(userName:E82),
 				(e65)-[:P4]->(:E52)-[:P82]->(date:E61)
-			MATCH (e33)-[:P129]->(target)
 			
 			OPTIONAL MATCH (e33)-[:P67]->(ref) WHERE NOT (ref)-[:P2]->(tSs)
 			OPTIONAL MATCH (target)-[:P1]->(targetFile:E75)
@@ -59,7 +65,7 @@ module.exports = {
 				collect(DISTINCT target.content) AS targets,
 				collect(DISTINCT ref.content) AS refs,
 				collect(DISTINCT targetFile) AS targetFile,
-				count(answer) AS answerLength,
+				collect(DISTINCT answer.content) AS answers,
 				tSs, tUd
 			
 			OPTIONAL MATCH (e33)-[:P67]->(screen:E36)-[:P2]->(tSs),
@@ -68,10 +74,10 @@ module.exports = {
 				(paint)-[:P1]->(paintFile:E75)
 			WITH e33, text, type, created, targets, refs, targetFile,
 				CASE WHEN count(screen) = 0 THEN [] ELSE collect({screenId: screen.content, cameraCenter: screen.cameraCenter, cameraFOV: screen.cameraFOV, cameraMatrix: screen.cameraMatrix, file: screenFile.content, path: screenFile.path, thumb: screenFile.thumb, width: screenFile.width, height: screenFile.height, paint: {id: paint.content, file: paintFile.content, path: paintFile.path, width: paintFile.width, height: paintFile.height}}) END AS screenshots,
-				screen, answerLength
+				screen, answers
 			OPTIONAL MATCH (screen)-[:P106]->(pin:E73)
-			RETURN e33.content AS eid,
-				text.value AS text,
+			RETURN e33.content AS id,
+				text.value AS value,
 				created,
 				type.content AS type,
 				targets,
@@ -79,7 +85,7 @@ module.exports = {
 				targetFile,
 				screenshots,
 				collect(DISTINCT pin) AS pins,
-				answerLength;`;
+				answers;`;
 
 		var params = {
 			subproj: sub === 'master' ? prj : sub
@@ -95,25 +101,96 @@ module.exports = {
 			});
 	},
 
-	queryTarget: function (req, res) {
-		var prj = req.params.id;
+	get: function (req, res) {
+		var prj = req.params.prj;
 
-		var q = 'MATCH (target:'+prj+' {content: {id}})<-[:P129]-(ce33:E33)-[:P2]->(type)-[:P127]->(:E55 {content: "commentType"}), \
-				(ce33)-[:P3]->(ce62:E62), \
-				(ce33)<-[:P94]-(ce65:E65)-[:P14]->(:E21)-[:P131]->(ce82:E82), \
-				(ce65)-[:P4]->(:E52)-[:P82]->(ce61:E61) \
-			OPTIONAL MATCH (ce33)<-[:P129]-(ae33:E33)-[:P2]->(atype), \
-				(ae33)-[:P3]->(ae62:E62), \
-				(ae33)<-[:P94]-(ae65:E65)-[:P14]->(:E21)-[:P131]->(ae82:E82), \
-				(ae65)-[:P4]->(:E52)-[:P82]->(ae61:E61) \
-			RETURN ce33.content AS id,\
-				ce62.value AS value,\
-				ce61.value AS date,\
-				ce82.value AS author,\
-				type.content AS type,\
-				collect({ id: ae33.content, value: ae62.value, date: ae61.value, author: ae82.value, type: atype.content }) AS answers';
+		// noinspection JSAnnotator
+		var q = `
+			MATCH (tSs:E55:`+prj+` {content: "screenshot"}), (tUd:E55:`+prj+` {content: "userDrawing"}), (tCt:E55:`+prj+` {content: "commentType"})
+			WITH tSs, tUd, tCt
+			
+			MATCH (e33:E33:`+prj+` {content: $id})-[:P2]->(type:E55)-[:P127]->(tCt),
+						(e33)-[:P129]->(target),
+						(e33)-[:P3]->(text:E62),
+						(e33)<-[:P94]-(e65:E65),
+						(e65)-[:P14]->(user:E21)-[:P131]->(userName:E82),
+						(e65)-[:P4]->(:E52)-[:P82]->(date:E61)
+			
+			OPTIONAL MATCH (target)-[:P1]->(targetFile:E75)
+			OPTIONAL MATCH (target)-[:P102]->(targetTitle:E35)
+			WITH tSs, tUd, tCt, e33, text, type,
+				{id: user.content, name: userName.value, date: date.value } AS created,
+				CASE WHEN "E31" IN labels(target) THEN collect({id: target.content, label: targetTitle.value, file: targetFile}) ELSE collect({id: target.content, label: target.name, file: targetFile}) END AS targets
+				
+			OPTIONAL MATCH (e33)-[:P67]->(refs) WHERE NOT (refs)-[:P2]->(tSs)
+			OPTIONAL MATCH (refs)-[:P1]->(refFile:E75)
+			OPTIONAL MATCH (refs)-[:P102]->(refTitle:E35)
+			WITH tSs, tUd, tCt, e33, text, type, created, targets,
+				CASE WHEN "E31" IN labels(refs) THEN collect({id: refs.content, label: refTitle.value, file: refFile}) ELSE collect({id: refs.content, label: refs.name, file: refFile}) END AS refs
+				
+			OPTIONAL MATCH (e33)<-[:P129]-(ae33:E33)-[:P2]->(atype),
+										 (ae33)-[:P3]->(ae62:E62),
+										 (ae33)<-[:P94]-(ae65:E65)-[:P14]->(ae21:E21)-[:P131]->(ae82:E82),
+										 (ae65)-[:P4]->(:E52)-[:P82]->(ae61:E61)
+			WITH tSs, tUd, tCt, e33, text, type, created, targets, refs,
+					 collect({id: ae33.content, value: ae62.value, type: atype.content, created: {id: ae21.content, name: ae82.value, date: ae61.value}}) AS answers
+			
+			OPTIONAL MATCH (e33)-[:P67]->(screen:E36)-[:P2]->(tSs),
+										 (screen)-[:P1]->(screenFile:E75),
+										 (screen)-[:P106]->(paint:E36)-[:P2]->(tUd),
+										 (paint)-[:P1]->(paintFile:E75)
+			WITH e33, text, type, created, targets, refs, answers, screen,
+					 collect({screenId: screen.content, cameraCenter: screen.cameraCenter, cameraFOV: screen.cameraFOV, cameraMatrix: screen.cameraMatrix, file: screenFile.content, path: screenFile.path, thumb: screenFile.thumb, width: screenFile.width, height: screenFile.height, paint: {id: paint.content, file: paintFile.content, path: paintFile.path, width: paintFile.width, height: paintFile.height}}) AS screenshots
+			OPTIONAL MATCH (screen)-[:P106]->(pin:E73)
+			RETURN e33.content AS id,
+						 text.value AS value,
+						 created,
+						 type.content AS type,
+						 targets,
+						 refs,
+						 answers,
+						 screenshots,
+						 collect(DISTINCT pin) AS pins;`;
+
 		var params = {
-			id: req.params.targetId
+			id: req.params.id
+		};
+
+		neo4j.readTransaction(q, params)
+			.then(function (results) {
+				res.json(neo4j.removeEmptyArrays(results, 'answers', 'id')[0]);
+			})
+			.catch(function (err) {
+				utils.error.neo4j(res, err, '#comment.get');
+			});
+	},
+
+	queryTarget: function (req, res) {
+		var prj = req.params.prj;
+
+		// noinspection JSAnnotator
+		var q = `
+			MATCH (target:`+prj+` {content: {id}})<-[:P129]-(ce33:E33)-[:P2]->(type)-[:P127]->(:E55 {content: "commentType"}),
+				(ce33)-[:P3]->(ce62:E62),
+				(ce33)<-[:P94]-(ce65:E65)-[:P14]->(ce21:E21)-[:P131]->(ce82:E82),
+				(ce65)-[:P4]->(:E52)-[:P82]->(ce61:E61)
+			OPTIONAL MATCH (ce33)<-[:P129]-(ae33:E33)-[:P2]->(atype),
+				(ae33)-[:P3]->(ae62:E62),
+				(ae33)<-[:P94]-(ae65:E65)-[:P14]->(ae21:E21)-[:P131]->(ae82:E82),
+				(ae65)-[:P4]->(:E52)-[:P82]->(ae61:E61)
+			RETURN ce33.content AS id,
+				ce62.value AS value,
+				{id: ce21.content, name: ce82.value, date: ce61.value} AS created,
+				type.content AS type,
+				collect({
+					id: ae33.content,
+					value: ae62.value,
+					created: {id: ae21.content, name: ae82.value, date: ae61.value},
+					type: atype.content
+				}) AS answers`;
+
+		var params = {
+			id: req.params.id
 		};
 
 		neo4j.readTransaction(q, params)
@@ -121,12 +198,12 @@ module.exports = {
 				res.json(neo4j.removeEmptyArrays(result, 'answers', 'id'));
 			})
 			.catch(function(err) {
-				utils.error.neo4j(res, err, '#comment.get');
+				utils.error.neo4j(res, err, '#comment.queryTarget');
 			});
 	},
 	
 	create: function (req, res) {
-		var prj = req.params.id;
+		var prj = req.params.prj;
 		var id = shortid.generate();
 
 		// set type
@@ -251,39 +328,35 @@ module.exports = {
 		// }
 
 		// refIds rausfiltern
-		var refs = [];
-		for (var j=0; j<req.body.refs.length; j++) {
-			refs.push(req.body.refs[j].id);
-		}
-		req.body.refs = refs;
+		// var refs = [];
+		// for (var j=0; j<req.body.refs.length; j++) {
+		// 	refs.push(req.body.refs[j].id);
+		// }
+		// req.body.refs = refs;
 
 		// fahre erst fort, wenn alle Aufgaben oben fertig sind
 		Promise.all(promises)
 			.then(function () {
 
-				var q = 'MATCH (e21:E21:'+prj+' {content: {user}})-[:P131]->(userName:E82), \
-					(type:E55:'+prj+' {content: {type}}) \
+				var q = 'MATCH (e21:E21:'+prj+' {content: $user})-[:P131]->(userName:E82), \
+					(type:E55:'+prj+' {content: $type}) \
 					WITH e21, userName, type \
-					OPTIONAL MATCH (target:'+prj+') WHERE target.content IN {targets} \
+					OPTIONAL MATCH (target:'+prj+') WHERE target.content IN $targets \
 					WITH e21, userName, type, collect(DISTINCT target) AS targets \
-					OPTIONAL MATCH (ref:'+prj+') WHERE ref.content IN {refs} \
+					OPTIONAL MATCH (ref:'+prj+') WHERE ref.content IN $refs \
 					WITH e21, userName, type, targets, collect(DISTINCT ref) AS refs \
-					CREATE (e33:E33:'+prj+' {content: {e33id}})-[:P3]->(e62:E62:'+prj+' {e62content}), \
-						(e65:E65:'+prj+' {content: "e65_" + {e33id}})-[:P4]->(:E52:'+prj+' {content: "e52_e65_" + {e33id}})-[:P82]->(e61:E61:'+prj+' {value: {date}}), \
-						(e33)-[:P2]->(type), ';
-
-				// if(req.body.title)
-				// 	q += '(e33)-[:P102]->(:E35:'+prj+' {e35content}), ';
-
-				  q += '(e65)-[:P94]->(e33), \
+					CREATE (e33:E33:'+prj+' {content: $e33id})-[:P3]->(e62:E62:'+prj+' $e62content), \
+						(e65:E65:'+prj+' {content: "e65_" + $e33id})-[:P4]->(:E52:'+prj+' {content: "e52_e65_" + $e33id})-[:P82]->(e61:E61:'+prj+' {value: $date}), \
+						(e33)-[:P2]->(type), \
+						(e65)-[:P94]->(e33), \
 						(e65)-[:P14]->(e21) \
 					FOREACH (t IN targets | CREATE (e33)-[:P129]->(t)) \
 					FOREACH (r IN refs | CREATE (e33)-[:P67]->(r)) ';
 
 				if(cType === 'commentModel')
-					q += 'WITH e33, e62, e61, userName, type \
+					q += 'WITH e33, e62, e61, e21, userName, type, targets, refs \
 						MATCH (tSs:E55:'+prj+' {content: "screenshot"}), (tUd:E55:'+prj+' {content: "userDrawing"}) \
-						FOREACH (s IN {screenshots} | \
+						FOREACH (s IN $screenshots | \
 							CREATE (e33)-[:P67]->(screen:E36:'+prj+' {content: s.screen36content, cameraCenter: s.cameraCenter, cameraFOV: s.cameraFOV, cameraMatrix: s.cameraMatrix})-[:P2]->(tSs), \
 								(screen)-[:P1]->(:E75:'+prj+' {content: s.screen75content, path: s.path, thumb: s.screen75thumb, width: s.width, height: s.height}), \
 								(screen)-[:P106]->(draw:E36:'+prj+' {content: s.paintId})-[:P2]->(tUd), \
@@ -291,7 +364,11 @@ module.exports = {
 							FOREACH (p in s.pins | \
 								CREATE (screen)-[:P106]->(:E73:'+prj+' {content: p.id, targetId: p.targetId, screenIndex: p.screenIndex, pinMatrix: p.pinMatrix}) ) ) ';
 
-				q += 'RETURN e33.content AS id, e62.value AS value, e61.value AS date, userName.value AS author, type.content AS type';
+				q += 'RETURN e33.content AS id,\
+					e62.value AS value,\
+					{id: e21.content, name: userName.value, date: e61.value} AS created,\
+					type.content AS type,\
+					targets, refs';
 
 				var params = {
 					targets: targets,
@@ -301,10 +378,6 @@ module.exports = {
 					e62content: {
 						content: 'e62_e33_' + id + '_comment',
 						value: req.body.text
-					},
-					e35content: {
-						content: 'e35_e33_' + id + '_comment',
-						value: req.body.title
 					},
 					date: req.body.date,
 					refs: req.body.refs || [],
