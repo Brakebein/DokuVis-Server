@@ -8,7 +8,7 @@ module.exports = {
 		var prj = req.params.id;
 
 		var q = 'MATCH (master:E7:'+prj+' {content: $master})-[:P9]->(sub:E7)-[:P2]->(:E55 {content: "subproject"}), \
-			(sub)-[:P102]->(title:E35) \
+			(sub)-[:P1]->(title:E41) \
 			OPTIONAL MATCH (sub)-[:P3]->(desc:E62)-[:P3_1]->(:E55 {content: "projDesc"}) \
 			RETURN sub.content AS id, title.value AS name, desc.value AS description';
 
@@ -29,7 +29,7 @@ module.exports = {
 		var prj = req.params.id;
 
 		var q = 'MATCH (sub:E7:'+prj+' {content: $subId})-[:P2]->(:E55 {content: "subproject"}), \
-			(sub)-[:P102]->(title:E35) \
+			(sub)-[:P1]->(title:E41) \
 			OPTIONAL MATCH (sub)-[:P3]->(desc:E62)-[:P3_1]->(:E55 {content: "projDesc"}) \
 			RETURN sub.content AS id, title.value AS name, desc.value AS description';
 
@@ -55,7 +55,7 @@ module.exports = {
 		var q = 'MATCH (master:E7:'+prj+' {content: $master})-[:P15]->(e22m:E22), \
 			(tsubp:E55:'+prj+' {content: "subproject"}), (tpdesc:E55:'+prj+' {content: "projDesc"}) \
 			CREATE (master)-[:P9]->(sub:E7:'+prj+' {content: $subproj})-[:P2]->(tsubp), \
-			(sub)-[:P102]->(title:E35:'+prj+' $title), \
+			(sub)-[:P1]->(title:E41:'+prj+' $title), \
 			(sub)-[:P3]->(desc:E62:'+prj+' $desc)-[:P3_1]->(tpdesc), \
 			(sub)-[:P15]->(e22s:E22:'+prj+' {content: "e22_root_"+$subproj}), \
 			(e22m)-[:P46]->(e22s) \
@@ -65,7 +65,7 @@ module.exports = {
 			master: prj,
 			subproj: 'sub' + tid,
 			title: {
-				content: 'e35_sub' + tid,
+				content: 'e41_sub' + tid,
 				value: req.body.name
 			},
 			desc: {
@@ -88,7 +88,7 @@ module.exports = {
 		// TODO: Cypher query überarbeiten (ist Unterscheidung noch nötig?)
 		var q = 'MATCH (sub:E7:'+prj+' {content: $subId})-[:P2]->(:E55 {content: "subproject"}), \
 			(tpdesc:E55:'+prj+' {content: "projDesc"}), \
-			(sub)-[:P102]->(title:E35) \
+			(sub)-[:P1]->(title:E41) \
 			OPTIONAL MATCH (sub)-[:P3]->(desc:E62)-[:P3_1]->(tpdesc) \
 			FOREACH ( ignoreMe IN CASE WHEN desc IS NULL AND length($desc) > 0 THEN [1] ELSE [] END | CREATE (sub)-[:P3]->(:E62:'+prj+' {content: "e62_" + sub.content, value: {desc}})-[:P3_1]->(tpdesc) ) \
 			FOREACH ( ignoreMe IN CASE WHEN NOT desc IS NULL THEN [1] ELSE [] END | SET desc.value = $desc ) \

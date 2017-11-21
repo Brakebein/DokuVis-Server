@@ -10,7 +10,7 @@ match (ttask:E55 {content: "task"}),
       (tstatus:E55:`+prj+` {content: "status_todo"})-[:P127]->(:E55 {content: "taskStatus"})
 create (task:E7 {content: {taskId}, progress: {progress}}),
        (task)-[:P2]->(ttask),
-       (task)-[:P102]->(:E35 {titleContent}),
+       (task)-[:P1]->(:E41 {titleContent}),
        (task)-[:P3]->(:E62 {descContent})-[:P3_1]->(tdesc),
        (task)<-[:P9]-(parent),
        (task)-[:P2]->(tprior),
@@ -31,7 +31,7 @@ foreach (e in editors.editor |
 MATCH (task:E7)-[:P2]->(ttask:E55)
 WHERE ttask.content = "task" OR ttask.content = "subproject"
 WITH task, ttask
-MATCH (task)-[:P102]->(title:E35),
+MATCH (task)-[:P1]->(title:E41),
       (task)-[:P3]->(desc:E62)-[:P3_1]->(:E55 {content: "taskDesc"}),
       (task)-[:P4]->(:E52)-[:P81]->(time:E61),
       (task)-[:P14]->(editor:E21)-[:P131]->(editorName:E82),
@@ -68,7 +68,7 @@ MATCH (mUser:E21 {content: "bruschie@hotmail.com"})-[:P131]->(mUserName:E82)
 WITH ttp, tprior, tts, tstatus, ttd, editorsColl, mUser, mUserName
 
 MATCH (task:E7 {content: "task_sfee3dscds"})-[:P2]->(ttask:E55 {content: "task"}),
-      (task)-[:P102]->(title:E35),
+      (task)-[:P1]->(title:E41),
       (task)-[:P3]->(desc:E62)-[:P3_1]->(ttd),
       (task)-[:P4]->(:E52)-[:P81]->(time:E61),
       (task)<-[:P9]-(parent),
@@ -126,7 +126,7 @@ RETURN task.content AS id,
 
 // delete
 MATCH (task:E7:`+prj+` {content: {taskId}})-[:P2]->(:E55 {content: "task"}),
-      (task)-[:P102]->(title:E35),
+      (task)-[:P1]->(title:E41),
       (task)-[:P3]->(desc:E62)-[:P3_1]->(:E55 {content: "taskDesc"}),
       (task)-[:P4]->(taske52:E52)-[:P81]->(time:E61),
       (task)<-[:P94]-(e65:E65)-[:P4]->(ce52:E52)-[:P82]->(cDate:E61),

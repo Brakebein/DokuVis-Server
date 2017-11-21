@@ -12,7 +12,7 @@ module.exports = {
 		MATCH (task:E7:`+prj+`)-[:P2]->(ttask:E55)
 		WHERE ttask.content = "task" OR ttask.content = "subproject"
 		WITH task, ttask
-		MATCH (task)-[:P102]->(title:E35),
+		MATCH (task)-[:P1]->(title:E41),
     		(task)-[:P3]->(desc:E62)-[:P3_1]->(:E55 {content: "taskDesc"}),
       		(task)-[:P4]->(:E52)-[:P81]->(time:E61),
       		(task)<-[:P94]-(e65:E65)-[:P14]->(user:E21)-[:P131]->(userName:E82),
@@ -55,7 +55,7 @@ module.exports = {
 		//noinspection JSAnnotator
 		var q = `
 		MATCH (task:E7:`+prj+` {content: {taskId}})-[:P2]->(ttask:E55 {content: "task"}),
-			(task)-[:P102]->(title:E35),
+			(task)-[:P1]->(title:E41),
     		(task)-[:P3]->(desc:E62)-[:P3_1]->(:E55 {content: "taskDesc"}),
       		(task)-[:P4]->(:E52)-[:P81]->(time:E61),
       		(task)<-[:P94]-(e65:E65)-[:P14]->(cUser:E21)-[:P131]->(cUserName:E82),
@@ -120,7 +120,7 @@ module.exports = {
   			
 		CREATE (task:E7:`+prj+` {content: {taskId}}),
 			(task)-[:P2]->(ttask),
-			(task)-[:P102]->(title:E35:`+prj+` {titleContent}),
+			(task)-[:P1]->(title:E41:`+prj+` {titleContent}),
 			(task)-[:P3]->(desc:E62:`+prj+` {descContent})-[:P3_1]->(tdesc),
 			(parent)-[:P9]->(task),
 			(task)-[:P2]->(tprior),
@@ -150,7 +150,7 @@ module.exports = {
 		var params = {
 			taskId: id,
 			titleContent: {
-				content: 'e35_' + id,
+				content: 'e41_' + id,
 				value: req.body.title
 			},
 			descContent: {
@@ -218,7 +218,7 @@ module.exports = {
 		MATCH (mUser:E21:`+prj+` {content: {user}})-[:P131]->(mUserName:E82)
 		WITH ttp, tprior, tts, tstatus, ttd, mUser, mUserName, editorsColl
 		MATCH (task:E7:`+prj+` {content: {taskId}})-[:P2]->(ttask:E55 {content: "task"}),
-			(task)-[:P102]->(title:E35),
+			(task)-[:P1]->(title:E41),
     		(task)-[:P3]->(desc:E62)-[:P3_1]->(ttd),
       		(task)-[:P4]->(:E52)-[:P81]->(time:E61),
       		(task)<-[:P9]-(parent),
@@ -307,7 +307,7 @@ module.exports = {
 		// noinspection JSAnnotator
 		var q = `
 		MATCH (task:E7:`+prj+` {content: {taskId}})-[:P2]->(:E55 {content: "task"}),
-			(task)-[:P102]->(title:E35),
+			(task)-[:P1]->(title:E41),
 			(task)-[:P3]->(desc:E62)-[:P3_1]->(:E55 {content: "taskDesc"}),
 			(task)-[:P4]->(taske52:E52)-[:P81]->(time:E61),
 			(task)<-[:P94]-(e65:E65)-[:P4]->(ce52:E52)-[:P82]->(cDate:E61),
