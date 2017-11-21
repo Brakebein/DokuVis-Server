@@ -13,44 +13,12 @@ module.exports = {
 		var prj = req.params.prj,
 			sub = req.params.subprj;
 
-		// target [:P15|P46|P9*1..9]
-
-		// var q = 'MATCH (tSs:E55:'+prj+' {content: "screenshot"}), (tUd:E55:'+prj+' {content: "userDrawing"}) \
-		// 	WITH tSs, tUd \
-		// 	MATCH (:E55:'+prj+' {content: "commentType"})<-[:P127]-(type:E55) \
-		// 	WHERE type.content <> "commentAnswer" \
-		// 	MATCH (type)<-[:P2]-(e33:E33), \
-		// 		(e33)-[:P3]->(text:E62), \
-		// 		(e33)<-[:P94]-(e65:E65), \
-		// 		(e65)-[:P14]->(user:E21)-[:P131]->(userName:E82), \
-		// 		(e65)-[:P4]->(:E52)-[:P82]->(date:E61), \
-		// 		(e33)-[:P129]->(targets)<-[:P15|P46|L11*1..9]-(:E7 {content: {subproj}}) \
-		// 	OPTIONAL MATCH (e33)-[:P102]->(title:E35) \
-		// 	OPTIONAL MATCH (e33)-[:P67]->(refs) WHERE NOT (refs)-[:P2]->(tSs) \
-		// 	OPTIONAL MATCH (e33)<-[:P129]-(answer:E33)-[:P2]->(:E55 {content: "commentAnswer"}) \
-		// 	WITH e33, text, title, type, {id: user.content, name: userName.value } AS author, date.value AS date, collect(targets.content) AS targets, collect(refs.content) AS refs, count(answer) AS answerLength, tSs, tUd \
-		// 	OPTIONAL MATCH (e33)-[:P67]->(screen:E36)-[:P2]->(tSs), \
-		// 		(screen)-[:P1]->(screenFile:E75), \
-		// 		(screen)-[:P106]->(paint:E36)-[:P2]->(tUd), \
-		// 		(paint)-[:P1]->(paintFile:E75) \
-		// 	WITH e33, text, title, type, author, date, targets, refs, CASE WHEN count(screen) = 0 THEN [] ELSE collect({screenId: screen.content, cameraCenter: screen.cameraCenter, cameraFOV: screen.cameraFOV, cameraMatrix: screen.cameraMatrix, file: screenFile.content, path: screenFile.path, thumb: screenFile.thumb, width: screenFile.width, height: screenFile.height, paint: {id: paint.content, file: paintFile.content, path: paintFile.path, width: paintFile.width, height: paintFile.height}}) END AS screenshots, screen, answerLength \
-		// 	OPTIONAL MATCH (screen)-[:P106]->(pin:E73) \
-		// 	RETURN e33.content AS id, text.value AS text, title.value AS title, author, date, type.content AS type, targets AS targets, refs AS refs, screenshots, collect(DISTINCT pin) AS pins, answerLength';
-
-		// MATCH (e33:E33:`+prj+`)-[:P2]->(type:E55)-[:P127]->(tCt)
-		// WHERE type.content <> "commentAnswer"
-		// MATCH (e33)-[:P129]->(targets)<-[:P15|L11*1..9]-(:E7 {content: $subproj}),
-		// (e33)-[:P3]->(text:E62),
-		// (e33)<-[:P94]-(e65:E65),
-		// (e65)-[:P14]->(user:E21)-[:P131]->(userName:E82),
-		// (e65)-[:P4]->(:E52)-[:P82]->(date:E61)
-
 		// noinspection JSAnnotator
 		var q = `
 			MATCH (tSs:E55:`+prj+` {content: "screenshot"}), (tUd:E55:`+prj+` {content: "userDrawing"}), (tCt:E55:`+prj+` {content: "commentType"})
 			WITH tSs, tUd, tCt
 			
-			MATCH (:E7:`+prj+` {content: $subproj})-[:P15|L11*1..9]->(target)<-[:P129]-(e33:E33)-[:P2]->(type:E55)-[:P127]->(tCt)
+			MATCH (:E7:`+prj+` {content: $subproj})-[:P15|L11|P9*1..9]->(target)<-[:P129]-(e33:E33)-[:P2]->(type:E55)-[:P127]->(tCt)
 			WHERE type.content <> "commentAnswer"
 			MATCH (e33)-[:P3]->(text:E62),
 				(e33)<-[:P94]-(e65:E65),
@@ -93,7 +61,6 @@ module.exports = {
 
 		neo4j.readTransaction(q, params)
 			.then(function(result) {
-				//res.json(neo4j.removeEmptyArrays(results, 'answers', 'id'));
 				res.json(result);
 			})
 			.catch(function(err) {
@@ -120,7 +87,7 @@ module.exports = {
 			OPTIONAL MATCH (target)-[:P102]->(targetTitle:E35)
 			WITH tSs, tUd, tCt, e33, text, type,
 				{id: user.content, name: userName.value, date: date.value } AS created,
-				CASE WHEN "E31" IN labels(target) THEN collect({id: target.content, label: targetTitle.value, file: targetFile}) ELSE collect({id: target.content, label: target.name, file: targetFile}) END AS targets
+				CASE WHEN any(x IN ["E31","E7"] WHERE x IN labels(target)) THEN collect({id: target.content, label: targetTitle.value, file: targetFile}) ELSE collect({id: target.content, label: target.name, file: targetFile}) END AS targets
 				
 			OPTIONAL MATCH (e33)-[:P67]->(refs) WHERE NOT (refs)-[:P2]->(tSs)
 			OPTIONAL MATCH (refs)-[:P1]->(refFile:E75)
@@ -158,7 +125,10 @@ module.exports = {
 
 		neo4j.readTransaction(q, params)
 			.then(function (results) {
-				res.json(neo4j.removeEmptyArrays(results, 'answers', 'id')[0]);
+				results = neo4j.removeEmptyArrays(results, 'answers', 'id');
+				results = neo4j.removeEmptyArrays(results, 'refs', 'id');
+				results = neo4j.removeEmptyArrays(results, 'screenshots', 'file');
+				res.json(results[0]);
 			})
 			.catch(function (err) {
 				utils.error.neo4j(res, err, '#comment.get');

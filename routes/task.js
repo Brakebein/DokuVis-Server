@@ -21,6 +21,9 @@ module.exports = {
       		(task)-[:P2]->(tprior:E55)-[:P127]->(:E55 {content: "taskPriority"}),
       		(task)-[:P2]->(tstatus:E55)-[:P127]->(:E55 {content: "taskStatus"})
       	OPTIONAL MATCH (task)-[:P14]->(editor:E21)-[:P131]->(editorName:E82)
+      	WITH task, title, desc, time, parent, ttask, tprior, tstatus, user, userName, date,
+      		collect({id: editor.content, name: editorName.value}) AS editors
+      	
       	OPTIONAL MATCH (task)<-[:P31]-(e11:E11)-[:P14]->(mUser:E21)-[:P131]->(mUserName:E82),
       		(e11)-[:P4]->(:E52)-[:P82]->(mDate:E61)
       	OPTIONAL MATCH (task)-[:P9]->(child)
@@ -33,7 +36,7 @@ module.exports = {
        		ttask.content AS type,
        		tprior.value AS priority,
        		tstatus.value AS status,
-       		collect({id: editor.content, name: editorName.value}) AS editors,
+       		editors,
        		{id: user.content, name: userName.value, date: date.value} AS created,
        		{id: mUser.content, name: mUserName.value, date: mDate.value} AS modified`;
 

@@ -124,7 +124,7 @@ OPTIONAL MATCH (target)-[:P1]->(targetFile:E75)
 OPTIONAL MATCH (target)-[:P102]->(targetTitle:E35)
 WITH tSs, tUd, tCt, e33, text, type,
 		 {id: user.content, name: userName.value, date: date.value } AS created,
-		 CASE WHEN "E31" IN labels(target) THEN collect({id: target.content, label: targetTitle.value, file: targetFile}) ELSE collect({id: target.content, label: target.name, file: targetFile}) END AS targets
+		 CASE WHEN any(x IN ["E31","E7"] WHERE x IN labels(target)) THEN collect({id: target.content, label: targetTitle.value, file: targetFile}) ELSE collect({id: target.content, label: target.name, file: targetFile}) END AS targets
 
 OPTIONAL MATCH (e33)-[:P67]->(refs) WHERE NOT (refs)-[:P2]->(tSs)
 OPTIONAL MATCH (refs)-[:P1]->(refFile:E75)

@@ -101,10 +101,19 @@ delete r
 return task,c
 
 // 2017-10-12
-// E35 Title to E41 Appellation
+// E35 Title to E41 Appellation for D7 Digital Machine Event
 match (d:D7)-[r]->(title:E35)
 create (d)-[:P1]->(title)
 set title:E41
 remove title:E35
 delete r
 return d, title
+
+// 2017-11-21
+// E35 Title to E41 Appellation for E7 Activity
+match (n:E7)-[r]->(title:E35)
+create (n)-[:P1]->(title)
+set title:E41
+remove title:E35
+delete r
+return n, title
