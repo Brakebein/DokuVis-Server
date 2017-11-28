@@ -503,6 +503,8 @@ module.exports = {
 			type: req.body.type,
 			title: req.body.title,
 			author: req.body.author,
+			e21id: 'e21_' + mId + '_' + utils.replace(req.body.author),
+			e82id: 'e82_' + mId + '_' + utils.replace(req.body.author),
 			date: req.body.date,
 			dateId: 'e52_e65_' + req.params.id,
 			place: req.body.place,

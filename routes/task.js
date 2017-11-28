@@ -208,13 +208,13 @@ module.exports = {
 
 		//noinspection JSAnnotator
 		var q = `
-		MATCH (ttp:E55:`+prj+` {content: "taskPriority"})<-[:P127]-(tprior:E55:`+prj+` {content: {priority}}),
-			(tts:E55:`+prj+` {content: "taskStatus"})<-[:P127]-(tstatus:E55:`+prj+` {content: {status}}),
+		MATCH (ttp:E55:`+prj+` {content: "taskPriority"})<-[:P127]-(tprior:E55:`+prj+` {value: {priority}}),
+			(tts:E55:`+prj+` {content: "taskStatus"})<-[:P127]-(tstatus:E55:`+prj+` {value: {status}}),
 			(ttd:E55:`+prj+` {content: "taskDesc"})
 		WITH ttp, tprior, tts, tstatus, ttd
-		MATCH (editor:E21:`+prj+`)-[:P131]->(editorName:E82)
+		OPTIONAL MATCH (editor:E21:`+prj+`)
   			WHERE editor.content IN {editors}
-  		WITH ttp, tprior, tts, tstatus, ttd, collect({editor: editor, editorName: editorName}) AS editorsColl
+  		WITH ttp, tprior, tts, tstatus, ttd, collect(editor) AS editorsColl
 		MATCH (mUser:E21:`+prj+` {content: {user}})-[:P131]->(mUserName:E82)
 		WITH ttp, tprior, tts, tstatus, ttd, mUser, mUserName, editorsColl
 		MATCH (task:E7:`+prj+` {content: {taskId}})-[:P2]->(ttask:E55 {content: "task"}),
@@ -257,10 +257,11 @@ module.exports = {
 			{id: mUser.content, name: mUserName.value, date: mDate.value} AS modified,
 			editorsColl
       	
-      	UNWIND editorsColl AS editors
-      	FOREACH (e IN editors.editor |
-      		CREATE (task)-[:P14]->(e)
-      	)
+      	UNWIND CASE editorsColl WHEN [] THEN [null] ELSE editorsColl END AS editors
+      	OPTIONAL MATCH (editors)-[:P131]->(editorsName:E82)
+      	FOREACH (e IN CASE WHEN editors IS NOT NULL THEN [1] ELSE [] END |
+      		CREATE (task)-[:P14]->(editors)
+		)
       	
 		RETURN task.content AS id,
        		title.value AS title,
@@ -270,7 +271,7 @@ module.exports = {
        		ttask.content AS type,
        		tprior.value AS priority,
        		tstatus.value AS status,
-       		collect({id: editors.editor.content, name: editors.editorName.value}) AS editors,
+       		CASE WHEN editors IS NOT NULL THEN collect({id: editors.content, name: editorsName.value}) ELSE [] END AS editors,
        		created,
        		modified`;
 
@@ -280,8 +281,8 @@ module.exports = {
 			desc: req.body.description,
 			from: req.body.from,
 			until: req.body.to,
-			priority: priority,
-			status: status,
+			priority: req.body.priority,
+			status: req.body.status,
 			editors: editors,
 			e11id: 'e11_m_' + mId,
 			e52id: 'e52_m_' + mId,
@@ -303,6 +304,8 @@ module.exports = {
 
 	delete: function (req, res) {
 		var prj = req.params.id;
+
+		// TODO: delete comments
 
 		// noinspection JSAnnotator
 		var q = `

@@ -138,7 +138,7 @@ router.delete('/auth/project/:prj/archive/:id', archive.delete);
 // staff
 const staff = require('./staff');
 router.get('/auth/project/:id/staff', staff.query);
-router.get('/auth/project/:id/staff/:userId', can('admin'), staff.get);
+router.get('/auth/project/:id/staff/:userId', staff.get);
 router.post('/auth/project/:id/staff', can('admin'), staff.create);
 router.get('/roles', staff.queryRoles);
 

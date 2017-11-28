@@ -52,17 +52,17 @@ RETURN task.content AS id,
        tprior.value AS priority,
        tstatus.value AS status,
        collect({id: editor.content, name: editor.name}) AS editors,
-       {id: user.content, name: userName.value, date: date.value} AS user
+       {id: user.content, name: userName.value, date: date.value} AS user;
 
 //update task
-MATCH (ttp:E55 {content: "taskPriority"})<-[:P127]-(tprior:E55 {content: "priority_medium"}),
-      (tts:E55 {content: "taskStatus"})<-[:P127]-(tstatus:E55 {content: "status_done"}),
-      (ttd:E55 {content: "taskDesc"})
+MATCH (ttp:E55:Proj_q66NrRJ {content: "taskPriority"})<-[:P127]-(tprior:E55 {value: 1}),
+      (tts:E55:Proj_q66NrRJ {content: "taskStatus"})<-[:P127]-(tstatus:E55 {value: 0}),
+      (ttd:E55:Proj_q66NrRJ {content: "taskDesc"})
 WITH ttp, tprior, tts, tstatus, ttd
 
-MATCH (editor:E21)-[:P131]->(editorName:E82)
+OPTIONAL MATCH (editor:E21:Proj_q66NrRJ)
   WHERE editor.content IN {editors}
-WITH ttp, tprior, tts, tstatus, ttd, collect({editor: editor, editorName: editorName}) AS editorsColl
+WITH ttp, tprior, tts, tstatus, ttd, collect(editor) AS editorsColl
 
 MATCH (mUser:E21 {content: "bruschie@hotmail.com"})-[:P131]->(mUserName:E82)
 WITH ttp, tprior, tts, tstatus, ttd, editorsColl, mUser, mUserName
@@ -107,9 +107,10 @@ WITH task, title, desc, time, parent, ttask, tprior, tstatus, created,
      {id: mUser.content, name: mUserName.value, date: mDate.value} AS modified,
      editorsColl
 
-UNWIND editorsColl AS editors
-FOREACH (e IN editors.editor |
-  CREATE (task)-[:P14]->(e)
+UNWIND CASE editorsColl WHEN [] THEN [null] ELSE editorsColl END AS editors
+OPTIONAL MATCH (editors)-[:P131]->(editorsName:E82)
+FOREACH (e IN CASE WHEN editors IS NOT NULL THEN [1] ELSE [] END |
+  CREATE (task)-[:P14]->(editors)
 )
 
 RETURN task.content AS id,
@@ -120,7 +121,7 @@ RETURN task.content AS id,
        ttask.content AS type,
        tprior.value AS priority,
        tstatus.value AS status,
-       collect({id: editors.editor.content, name: editors.editorName.value}) AS editors,
+       CASE WHEN editors IS NOT NULL THEN collect({id: editors.content, name: editorsName.value}) ELSE [] END AS editors,
        created,
        modified
 
