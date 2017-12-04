@@ -125,7 +125,8 @@ var auth = {
 	
 	checkJWT: function (req, res) {
 		res.status(200);
-		res.send(null);
+		res.append('Content-Type', 'text/plain');
+		res.end();
 	}
 	
 };
