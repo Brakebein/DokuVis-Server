@@ -12,7 +12,7 @@ module.exports = {
 				sw.value AS name';
 
 		var params = {
-			search: req.query.search ? '.*' + req.query.search + '.*' : '.*'
+			search: req.query.search ? '(?i).*' + req.query.search + '.*' : '.*'
 		};
 
 		neo4j.readTransaction(q, params)

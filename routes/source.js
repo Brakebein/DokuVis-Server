@@ -550,6 +550,7 @@ module.exports = {
 			OPTIONAL MATCH (date)<-[rdate:P82]-() \
 			OPTIONAL MATCH (e84)-[:P48]->(archivenr:E42) \
 			OPTIONAL MATCH (archivenr)<-[ranr:P48]-()\
+			OPTIONAL MATCH (e31)-[:P106]->(spatial:E73)-[:P2]->(:E55 {content: "spatializeInfo"})\
 			OPTIONAL MATCH (e31)-[:P3]->(note:E62)-[:P3_1]->({content: "sourceComment"}) \
 			OPTIONAL MATCH (e31)-[:P3]->(repros:E62)-[:P3_1]->({content: "sourceRepros"}) \
 			OPTIONAL MATCH (e84)<-[:P46]-(e78:E78)-[:P1]->(coll:E41), \
@@ -560,7 +561,7 @@ module.exports = {
 			OPTIONAL MATCH (e31)<-[:P31]-(me11:E11)-[:P4]->(me52:E52)-[:P82]->(mDate:E61)\
 			\
 			DETACH DELETE e31, lv, title, note, repros, e65, e84, e52, \
-				upe7, upe52, upDate, me11, me52, mDate \
+				upe7, upe52, upDate, me11, me52, mDate, spatial \
 			\
 			WITH file, file.path AS path, date, count(rdate) AS rdcount, archivenr, count(ranr) AS racount\
 			FOREACH (ignoreMe IN CASE WHEN rdcount < 2 THEN [date] ELSE [] END |\

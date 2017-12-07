@@ -78,6 +78,8 @@ const digitalobject = require('./digitalobject');
 const software = require('./software');
 router.get('/auth/project/:prj/:subprj/model/version', modelversion.query);
 router.get('/auth/project/:prj/:subprj/model/version/:id', modelversion.get);
+router.put('/auth/project/:prj/:subprj/model/version/:id', modelversion.update);
+router.delete('/auth/project/:prj/:subprj/model/version/:id', modelversion.delete);
 router.get('/auth/project/:prj/:subprj/model/version/:id/object', digitalobject.query);
 router.post('/auth/project/:prj/:subprj/model/version', mUpload.single('uploadModelFile'), upload);
 router.get('/auth/project/:prj/software', software.query);
