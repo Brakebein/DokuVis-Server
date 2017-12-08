@@ -118,16 +118,17 @@ module.exports = {
 				
 			WITH devent, summary, note, mUser, mUserName, mDate
 			
-			UNWIND $software AS sw
-			MERGE (software:D14:`+prj+` {value: sw.value})
-				ON CREATE SET software.content = sw.content
-			CREATE (devent)-[:L23]->(software)
+			FOREACH (sw IN $software | 
+				MERGE (software:D14:`+prj+` {value: sw.value})
+					ON CREATE SET software.content = sw.content
+				CREATE (devent)-[:L23]->(software)
+			)
 			
 			RETURN devent.content AS id,
 				summary.value AS summary,
 				note.value AS note,
 				{id: mUser.content, name: mUserName.value, date: mDate.value} AS modified,
-				collect(software.value) AS software`;
+				extract(sw IN $software | sw.value) AS software`;
 
 		var params = {
 			user: req.headers['x-key'],

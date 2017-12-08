@@ -152,6 +152,10 @@ router.get('/auth/project/:id/task/:tid', task.get);
 router.put('/auth/project/:id/task/:tid', task.update);
 router.delete('/auth/project/:id/task/:tid', task.delete);
 
+// activities
+const activity = require('./activity');
+router.get('/auth/project/:prj/:subprj/activity', activity.query);
+
 const typeahead = require('./typeahead');
 router.get('/auth/project/:id/typeahead/:label/:prop/:from', typeahead.query);
 router.get('/auth/project/:id/typeahead/tag', typeahead.queryTags);
