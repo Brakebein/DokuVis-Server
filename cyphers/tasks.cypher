@@ -25,10 +25,10 @@ with task, title, desc, time, parent, ttask, tprior, tstatus, user, userName, da
 unwind editorsColl as editors
 foreach (e in editors.editor |
   create (task)-[:P14]->(e)
-)
+);
 
 //query tasks
-MATCH (task:E7)-[:P2]->(ttask:E55)
+MATCH (task:E7:Proj_HJZxO2bxG)-[:P2]->(ttask:E55)
 WHERE ttask.content = "task" OR ttask.content = "subproject"
 WITH task, ttask
 MATCH (task)-[:P1]->(title:E41),
@@ -41,18 +41,23 @@ MATCH (task)-[:P1]->(title:E41),
       (task)-[:P2]->(tprior:E55)-[:P127]->(:E55 {content: "taskPriority"}),
       (task)-[:P2]->(tstatus:E55)-[:P127]->(:E55 {content: "taskStatus"})
 OPTIONAL MATCH (task)-[:P14]->(editor:E21)-[:P131]->(editorName:E82)
+WITH task, title, desc, time, parent, ttask, tprior, tstatus, user, userName, date,
+     collect({id: editor.content, name: editorName.value}) AS editors
 OPTIONAL MATCH (task)<-[:P31]-(e11:E11)-[:P14]->(mUser:E21)-[:P131]->(mUserName:E82),
                (e11)-[:P4]->(:E52)-[:P82]->(mDate:E61)
+OPTIONAL MATCH (task)-[:P9]->(child)
 RETURN task.content AS id,
        title.value AS title,
        desc.value AS description,
        time.value AS from, time.until AS to,
        parent.content AS parent,
+       collect(child.content) AS children,
        ttask.content AS type,
        tprior.value AS priority,
        tstatus.value AS status,
-       collect({id: editor.content, name: editor.name}) AS editors,
-       {id: user.content, name: userName.value, date: date.value} AS user;
+       editors,
+       {id: user.content, name: userName.value, date: date.value} AS created,
+       {id: mUser.content, name: mUserName.value, date: mDate.value} AS modified;
 
 //update task
 MATCH (ttp:E55:Proj_q66NrRJ {content: "taskPriority"})<-[:P127]-(tprior:E55 {value: 1}),
