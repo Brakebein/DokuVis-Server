@@ -14,48 +14,53 @@ module.exports = {
 		var prj = req.params.prj;
 		var subprj = req.params.subprj;
 
-		var q = 'MATCH (e31:E31:'+prj+')-[:P2]->(type:E55)-[:P127]->(:E55 {content:"sourceType"}), \
-			(e31)<-[:P15]-(:E7 {content: $subprj}), \
-			(e31)-[:P102]->(title:E35), \
-			(e31)-[:P1]->(file:E75), \
-			(e31)<-[:P94]-(e65:E65), \
-			(e31)<-[:P128]-(e84:E84) \
-			OPTIONAL MATCH (e31)-[:has_tag]->(tag:TAG) \
-			WITH e31, type, title, file, e65, e84, collect(tag.content) AS tags \
-			OPTIONAL MATCH (e31)-[:P2]->(primary:E55 {content:"primarySource"}) \
-			OPTIONAL MATCH (e65)-[:P14]->(author:E21)-[:P131]->(aname:E82) \
-			OPTIONAL MATCH (e65)-[:P7]->(place:E53)-[:P87]->(pname:E48) \
-			OPTIONAL MATCH (e65)-[:P4]->(:E52)-[:P82]->(date:E61) \
-			OPTIONAL MATCH (e84)-[:P48]->(archivenr:E42) \
-			OPTIONAL MATCH (e31)<-[:P138]-(plan3d:E36) \
-			OPTIONAL MATCH (e31)-[:P106]->(spatial:E73)-[:P2]->(:E55 {content: "spatializeInfo"})\
-			OPTIONAL MATCH (e31)-[:P3]->(note:E62)-[:P3_1]->({content: "sourceComment"}) \
-			OPTIONAL MATCH (e31)-[:P3]->(repros:E62)-[:P3_1]->({content: "sourceRepros"}) \
-			OPTIONAL MATCH (e84)<-[:P46]-(e78:E78)-[:P1]->(coll:E41), \
-				(e78)-[:P52]->(:E40)-[:P131]->(inst:E82) \
-			OPTIONAL MATCH (e31)<-[:P129]-(ce33:E33)-[:P2]->(:E55 {content: "commentSource"}) \
-			OPTIONAL MATCH (e31)<-[:P15]-(up:E7)-[:P2]->(:E55 {content: "sourceUpload"}), \
-				(up)-[:P14]->(user:E21)-[:P131]->(userName:E82), \
-				(up)-[:P4]->(:E52)-[:P82]->(upDate:E61) \
-			OPTIONAL MATCH (e31)<-[:P31]-(e11:E11)-[:P14]->(mUser:E21)-[:P131]->(mUserName:E82),\
-				(e11)-[:P4]->(:E52)-[:P82]->(mDate:E61)\
-			RETURN e31.content AS id, \
-				type.content AS type, \
-				title.value AS title, \
-				primary IS NOT NULL AS primary, \
-				aname.value AS author, \
-				pname.value AS place, \
-				date.value AS date, \
-				{identifier: archivenr.value, collection: coll.value, institution: inst.value, institutionAbbr: inst.abbr} AS archive, \
-				file AS file, \
-				plan3d.content AS plan3d, \
-				spatial AS spatial, \
-				note.value AS note, \
-				repros.value AS repros, \
-				tags, \
-				count(ce33) AS commentLength, \
-				{id: user.content, name: userName.value, date: upDate.value} AS created,\
-				{id: mUser.content, name: mUserName.value, date: mDate.value} AS modified';
+		// TODO: plan3d obsolete
+		// TODO: merge E31 with E36/E33
+		// TODO: E11 Modification -> E7 Activity with type sourceEdit
+
+		// noinspection JSAnnotator
+		var q = `MATCH (e31:E31:`+prj+`)-[:P2]->(type:E55)-[:P127]->(:E55 {content:"sourceType"}),
+			(e31)<-[:P15]-(:E7 {content: $subprj}),
+			(e31)-[:P102]->(title:E35),
+			(e31)-[:P1]->(file:E75),
+			(e31)<-[:P94]-(e65:E65),
+			(e31)<-[:P128]-(e84:E84)
+			OPTIONAL MATCH (e31)-[:has_tag]->(tag:TAG)
+			WITH e31, type, title, file, e65, e84, collect(tag.content) AS tags
+			OPTIONAL MATCH (e31)-[:P2]->(primary:E55 {content:"primarySource"})
+			OPTIONAL MATCH (e65)-[:P14]->(author:E21)-[:P131]->(aname:E82)
+			OPTIONAL MATCH (e65)-[:P7]->(place:E53)-[:P87]->(pname:E48)
+			OPTIONAL MATCH (e65)-[:P4]->(:E52)-[:P82]->(date:E61)
+			OPTIONAL MATCH (e84)-[:P48]->(archivenr:E42)
+			OPTIONAL MATCH (e31)<-[:P138]-(plan3d:E36)
+			OPTIONAL MATCH (e31)-[:P106]->(spatial:E73)-[:P2]->(:E55 {content: "spatializeInfo"})
+			OPTIONAL MATCH (e31)-[:P3]->(note:E62)-[:P3_1]->({content: "sourceComment"})
+			OPTIONAL MATCH (e31)-[:P3]->(repros:E62)-[:P3_1]->({content: "sourceRepros"})
+			OPTIONAL MATCH (e84)<-[:P46]-(e78:E78)-[:P1]->(coll:E41),
+				(e78)-[:P52]->(:E40)-[:P131]->(inst:E82)
+			OPTIONAL MATCH (e31)<-[:P129]-(ce33:E33)-[:P2]->(:E55 {content: "commentSource"})
+			OPTIONAL MATCH (e31)<-[:P15]-(up:E7)-[:P2]->(:E55 {content: "sourceUpload"}),
+				(up)-[:P14]->(user:E21)-[:P131]->(userName:E82),
+				(up)-[:P4]->(:E52)-[:P82]->(upDate:E61)
+			OPTIONAL MATCH (e31)<-[:P31]-(e11:E11)-[:P14]->(mUser:E21)-[:P131]->(mUserName:E82),
+				(e11)-[:P4]->(:E52)-[:P82]->(mDate:E61)
+			RETURN e31.content AS id,
+				type.content AS type,
+				title.value AS title,
+				primary IS NOT NULL AS primary,
+				aname.value AS author,
+				pname.value AS place,
+				date.value AS date,
+				{identifier: archivenr.value, collection: coll.value, institution: inst.value, institutionAbbr: inst.abbr} AS archive,
+				file AS file,
+				plan3d.content AS plan3d,
+				spatial AS spatial,
+				note.value AS note,
+				repros.value AS repros,
+				tags,
+				count(ce33) AS commentLength, 
+				{id: user.content, name: userName.value, date: upDate.value} AS created,
+				{id: mUser.content, name: mUserName.value, date: mDate.value} AS modified`;
 
 		var params = {
 			subprj: subprj === 'master' ? prj : subprj
@@ -74,48 +79,51 @@ module.exports = {
 		var prj = req.params.prj;
 		var subprj = req.params.subprj;
 
-		var q = 'MATCH (e31:E31:'+prj+' {content: $id})-[:P2]->(type:E55)-[:P127]->(:E55 {content:"sourceType"}), \
-			(e31)-[:P102]->(title:E35), \
-			(e31)-[:P1]->(file:E75), \
-			(e31)<-[:P94]-(e65:E65), \
-			(e31)<-[:P128]-(e84:E84) \
-			OPTIONAL MATCH (e31)-[:has_tag]->(tag:TAG) \
-			WITH e31, type, title, file, e65, e84, collect(tag.content) AS tags \
-			OPTIONAL MATCH (e31)-[:P2]->(primary:E55 {content:"primarySource"}) \
-			OPTIONAL MATCH (e65)-[:P14]->(author:E21)-[:P131]->(aname:E82) \
-			OPTIONAL MATCH (e65)-[:P7]->(place:E53)-[:P87]->(pname:E48) \
-			OPTIONAL MATCH (e65)-[:P4]->(:E52)-[:P82]->(date:E61) \
-			OPTIONAL MATCH (e84)-[:P48]->(archivenr:E42) \
-			OPTIONAL MATCH (e31)<-[:P138]-(plan3d:E36) \
-			OPTIONAL MATCH (e31)-[:P106]->(spatial:E73)-[:P2]->(:E55 {content: "spatializeInfo"})\
-			OPTIONAL MATCH (e31)-[:P3]->(note:E62)-[:P3_1]->({content: "sourceComment"}) \
-			OPTIONAL MATCH (e31)-[:P3]->(repros:E62)-[:P3_1]->({content: "sourceRepros"}) \
-			OPTIONAL MATCH (e84)<-[:P46]-(e78:E78)-[:P1]->(coll:E41), \
-				(e78)-[:P52]->(:E40)-[:P131]->(inst:E82) \
-			OPTIONAL MATCH (e31)<-[:P129]-(ce33:E33)-[:P2]->(:E55 {content: "commentSource"}) \
-			OPTIONAL MATCH (e31)<-[:P15]-(up:E7)-[:P2]->(:E55 {content: "sourceUpload"}), \
-				(up)-[:P14]->(user:E21)-[:P131]->(userName:E82), \
-				(up)-[:P4]->(:E52)-[:P82]->(upDate:E61) \
-			OPTIONAL MATCH (e31)<-[:P31]-(e11:E11)-[:P14]->(mUser:E21)-[:P131]->(mUserName:E82),\
-				(e11)-[:P4]->(:E52)-[:P82]->(mDate:E61)\
-			RETURN e31.content AS id, \
-				id(e31) AS nId, \
-				type.content AS type, \
-				title.value AS title, \
-				primary IS NOT NULL AS primary, \
-				aname.value AS author, \
-				pname.value AS place, \
-				date.value AS date, \
-				{identifier: archivenr.value, collection: coll.value, institution: inst.value, institutionAbbr: inst.abbr} AS archive, \
-				file AS file, \
-				plan3d.content AS plan3d,\
-				spatial AS spatial, \
-				note.value AS note, \
-				repros.value AS repros, \
-				tags, \
-				count(ce33) AS commentLength, \
-				{id: user.content, name: userName.value, date: upDate.value} AS created,\
-				{id: mUser.content, name: mUserName.value, date: mDate.value} AS modified';
+		// noinspection JSAnnotator
+		var q = `MATCH (e31:E31:`+prj+` {content: $id})-[:P2]->(type:E55)-[:P127]->(:E55 {content:"sourceType"}),
+			(e31)-[:P102]->(title:E35),
+			(e31)-[:P1]->(file:E75),
+			(e31)<-[:P94]-(e65:E65),
+			(e31)<-[:P128]-(e84:E84)
+			OPTIONAL MATCH (e31)-[:has_tag]->(tag:TAG)
+			WITH e31, type, title, file, e65, e84, collect(tag.content) AS tags
+			OPTIONAL MATCH (e31)-[:P2]->(primary:E55 {content:"primarySource"})
+			OPTIONAL MATCH (e65)-[:P14]->(author:E21)-[:P131]->(aname:E82)
+			OPTIONAL MATCH (e65)-[:P7]->(place:E53)-[:P87]->(pname:E48)
+			OPTIONAL MATCH (e65)-[:P4]->(:E52)-[:P82]->(date:E61)
+			OPTIONAL MATCH (e84)-[:P48]->(archivenr:E42)
+			OPTIONAL MATCH (e31)<-[:P138]-(plan3d:E36)
+			OPTIONAL MATCH (e31)-[:P70]->(:E33)-[:P72]->(language:E56)
+			OPTIONAL MATCH (e31)-[:P106]->(spatial:E73)-[:P2]->(:E55 {content: "spatializeInfo"})
+			OPTIONAL MATCH (e31)-[:P3]->(note:E62)-[:P3_1]->({content: "sourceComment"})
+			OPTIONAL MATCH (e31)-[:P3]->(repros:E62)-[:P3_1]->({content: "sourceRepros"})
+			OPTIONAL MATCH (e84)<-[:P46]-(e78:E78)-[:P1]->(coll:E41),
+				(e78)-[:P52]->(:E40)-[:P131]->(inst:E82)
+			OPTIONAL MATCH (e31)<-[:P129]-(ce33:E33)-[:P2]->(:E55 {content: "commentSource"})
+			OPTIONAL MATCH (e31)<-[:P15]-(up:E7)-[:P2]->(:E55 {content: "sourceUpload"}),
+				(up)-[:P14]->(user:E21)-[:P131]->(userName:E82),
+				(up)-[:P4]->(:E52)-[:P82]->(upDate:E61)
+			OPTIONAL MATCH (e31)<-[:P31]-(e11:E11)-[:P14]->(mUser:E21)-[:P131]->(mUserName:E82),
+				(e11)-[:P4]->(:E52)-[:P82]->(mDate:E61)
+			RETURN e31.content AS id,
+				id(e31) AS nId,
+				type.content AS type,
+				title.value AS title,
+				primary IS NOT NULL AS primary,
+				aname.value AS author,
+				pname.value AS place,
+				date.value AS date,
+				{identifier: archivenr.value, collection: coll.value, institution: inst.value, institutionAbbr: inst.abbr} AS archive,
+				file AS file,
+				plan3d.content AS plan3d,
+				language.content AS language,
+				spatial AS spatial,
+				note.value AS note,
+				repros.value AS repros,
+				tags,
+				count(ce33) AS commentLength,
+				{id: user.content, name: userName.value, date: upDate.value} AS created,
+				{id: mUser.content, name: mUserName.value, date: mDate.value} AS modified`;
 
 		var params = {
 			subprj: subprj === 'master' ? prj : subprj,
@@ -173,23 +181,34 @@ module.exports = {
 				return fs.renameAsync(req.file.path, path + filename);
 			})
 			.then(function () {
-				// create thumbnail
-				return exec(config.exec.ImagickConvert, [path + filename, '-resize', '160x90^', '-gravity', 'center', '-extent', '160x90', path + filenameThumb]);
-			})
-			.then(function () {
-				// downsample preview image
-				return exec(config.exec.ImagickConvert, [path + filename, '-resize', '1024x1024>', path + filenamePreview]);
-			})
-			.then(function () {
-				// sample image to texture with resolution power of 2
-				return utils.resizeToNearestPowerOf2(path, filename, filenameTexture);
-			})
-			.then(function (output) {
-				imgWidth = output.originalWidth;
-				imgHeight = output.originalHeight;
 
-				// downsample image to preview texture
-				return exec(config.exec.ImagickConvert, [path + filename, '-resize', '128x128!', path + filenameTexturePreview]);
+				if (req.body.sourceType === 'text') {
+					// extract first page of pdf as jpg
+					return exec(config.exec.Ghostscript, ['-dNOPAUSE', '-dBATCH', '-sDEVICE=jpeg', '-dLastPage=1', '-sOutputFile=' + path + filenameThumb, path + filename])
+						.then(function () {
+							// create thumbnail
+							return exec(config.exec.ImagickConvert, [path + filenameThumb, '-resize', '160x90^', '-gravity', 'north', '-extent', '160x90', path + filenameThumb]);
+						});
+				}
+				else {
+					// create thumbnail
+					return exec(config.exec.ImagickConvert, [path + filename, '-resize', '160x90^', '-gravity', 'center', '-extent', '160x90', path + filenameThumb])
+						.then(function () {
+							// downsample preview image
+							return exec(config.exec.ImagickConvert, [path + filename, '-resize', '1024x1024>', path + filenamePreview]);
+						})
+						.then(function () {
+							// sample image to texture with resolution power of 2
+							return utils.resizeToNearestPowerOf2(path, filename, filenameTexture);
+						})
+						.then(function (output) {
+							imgWidth = output.originalWidth;
+							imgHeight = output.originalHeight;
+
+							// downsample image to preview texture
+							return exec(config.exec.ImagickConvert, [path + filename, '-resize', '128x128!', path + filenameTexturePreview]);
+						});
+				}
 			})
 			.catch(function (err) {
 				utils.error.server(res, err, '#source.create fs/exec @ ' + path + filename);
@@ -297,18 +316,6 @@ module.exports = {
 					user: req.headers['x-key'],
 					e31id: 'e31_' + filename,
 					sourceType: req.body.sourceType,
-					e75file: {
-						content: filename,
-						type: filename.split(".").pop().toLowerCase(),
-						path: shortPath,
-						thumb: filenameThumb,
-						preview: filenamePreview,
-						texture: filenameTexture,
-						texturePreview: filenameTexturePreview,
-						orginal: req.file.originalname,
-						width: imgWidth,
-						height: imgHeight
-					},
 					e35title: {
 						content: 'e35_' + filename,
 						value: req.body.title
@@ -343,6 +350,30 @@ module.exports = {
 					upload52: 'e52_e7_upload_' + filename,
 					tags: req.body.tags ? req.body.tags.split(',') : []
 				};
+
+				if (req.body.sourceType === 'text') {
+					params.e75file = {
+						content: filename,
+						type: filename.split(".").pop().toLowerCase(),
+						path: shortPath,
+						thumb: filenameThumb,
+						orginal: req.file.originalname
+					};
+				}
+				else {
+					params.e75file = {
+						content: filename,
+						type: filename.split(".").pop().toLowerCase(),
+						path: shortPath,
+						thumb: filenameThumb,
+						preview: filenamePreview,
+						texture: filenameTexture,
+						texturePreview: filenameTexturePreview,
+						orginal: req.file.originalname,
+						width: imgWidth,
+						height: imgHeight
+					};
+				}
 
 				return neo4j.writeTransaction(q, params);
 			})
@@ -388,19 +419,19 @@ module.exports = {
 		var prj = req.params.prj;
 		var mId = shortid.generate();
 
-		var q = 'MATCH (st:E55:'+prj+' {content: "sourceType"})<-[:P127]-(type:E55 {content: $type}),\
+		var q = 'MATCH (st:E55:'+prj+' {content: "sourceType"}),\
 				(sc:E55:'+prj+' {content: "sourceComment"}),\
 				(sr:E55:'+prj+' {content: "sourceRepros"}),\
 				(sp:E55:'+prj+' {content: "primarySource"}),\
 				(mUser:E21:'+prj+' {content: $user})-[:P131]->(mUserName:E82)\
-			WITH st, sc, sr, sp, type, mUser, mUserName\
-			MATCH (e31:E31:'+prj+' {content: $id})-[rtype:P2]->(:E55)-[:P127]->(st),\
+			WITH st, sc, sr, sp, mUser, mUserName\
+			MATCH (e31:E31:'+prj+' {content: $id})-[:P2]->(type:E55)-[:P127]->(st),\
 				(e31)-[:P102]->(title:E35),\
 				(e31)-[:P1]->(file:E75),\
 				(e31)<-[:P94]-(e65:E65),\
 				(e31)<-[:P128]-(e84:E84)\
 			OPTIONAL MATCH (e31)-[rtag:has_tag]->(:TAG)\
-			WITH sc, sr, sp, type, mUser, mUserName, e31, title, file, e65, e84, rtype, collect(rtag) AS rtags';
+			WITH sc, sr, sp, type, mUser, mUserName, e31, title, file, e65, e84, collect(rtag) AS rtags';
 
 		q += ' OPTIONAL MATCH (e65)-[rauthor:P14]->(:E21)\
 			OPTIONAL MATCH (e65)-[rplace:P7]->(:E53)\
@@ -412,7 +443,7 @@ module.exports = {
 			OPTIONAL MATCH (e84)-[ranr:P48]->(archivenrOld:E42)\
 			OPTIONAL MATCH (archivenrOld)<-[ranrs:P48]-()';
 
-		q += ' DELETE rtype, rauthor, rplace, rprimary, rcoll, rmp14, rdate, ranr\
+		q += ' DELETE rauthor, rplace, rprimary, rcoll, rmp14, rdate, ranr\
 			FOREACH (rt in rtags | DELETE rt)';
 
 		q += ' WITH sc, sr, sp, type, mUser, mUserName, e31, title, file, e65, e84, dateOld, count(rdate) AS rdcount, archivenrOld, count(ranrs) AS racount';
@@ -423,12 +454,12 @@ module.exports = {
 			q += ' OPTIONAL MATCH (e31)-[:P3]->(noteOld:E62)-[:P3_1]->(sc)';
 		if (!req.body.repros)
 			q += ' OPTIONAL MATCH (e31)-[:P3]->(reprosOld:E62)-[:P3_1]->(sr)';
+		if (req.body.type === 'text')
+			q += ' OPTIONAL MATCH (e31)-[:P70]->(e33:E33)-[rlang:P72]->(:E56)';
 
 		q += ' OPTIONAL MATCH (e31)<-[:P15]-(up:E7)-[:P2]->(:E55 {content: "sourceUpload"}),\
 				(up)-[:P14]->(cUser:E21)-[:P131]->(cUserName:E82),\
 				(up)-[:P4]->(:E52)-[:P82]->(cDate:E61)';
-
-		q += ' CREATE (e31)-[:P2]->(type)';
 
 		q += ' MERGE (e31)<-[:P31]-(me11:E11:'+prj+')-[:P4]->(me52:E52:'+prj+')-[:P82]->(mDate:E61:'+prj+')\
 				ON CREATE SET me11.content = $me11, me52.content = $me52, mDate.value = $mDate\
@@ -464,6 +495,10 @@ module.exports = {
 			q += ' MERGE (archivenr:E42:'+prj+' {value: $archiveNr})\
 					ON CREATE SET archivenr.content = $archiveNrId\
 				CREATE (e84)-[:P48]->(archivenr)';
+		if (req.body.type === 'text') {
+			q += ' MERGE (e56:E56:'+prj+' {content: $language}) \
+					CREATE (e33)-[:P72]->(e56)';
+		}
 
 		q += ' SET title.value = $title';
 
@@ -476,6 +511,8 @@ module.exports = {
 			q += ' DETACH DELETE noteOld';
 		if (!req.body.repros)
 			q += ' DETACH DELETE reprosOld';
+		if (req.body.type === 'text')
+			q += ' DELETE rlang';
 
 		q += ' FOREACH (tag in $tags | \
 				MERGE (t:TAG:'+prj+' {content: tag}) \
@@ -519,6 +556,7 @@ module.exports = {
 			archiveNr: req.body.archive.identifier,
 			archiveNrId: 'e42_e84_' + req.params.id,
 			primary: req.body.primary,
+			language: req.body.language,
 			tags: req.body.tags,
 			mDate: req.body.modificationDate,
 			me11: 'e11_m_' + mId,
@@ -537,7 +575,7 @@ module.exports = {
 	delete: function (req, res) {
 		var prj = req.params.prj;
 
-		// TODO: handle spazialized plan/foto and comments
+		// TODO: handle spazialized plan/foto and comments (-> trigger?)
 
 		var q = 'MATCH (e31:E31:'+prj+' {content: $id})-[:P70]->(lv), \
 				(e31)-[:P102]->(title:E35), \
@@ -633,13 +671,15 @@ module.exports = {
 		var filenameTexturePreview = filename.slice(0, filename.lastIndexOf(".")) + '_tex_preview.jpg';
 
 		var imgWidth, imgHeight;
-		var fileOld;
+		var sourceType, fileOld;
 
-		var filequery = 'MATCH (e31:E31:' + prj + ' {content: $id})-[:P1]->(file:E75) RETURN file';
+		var filequery = 'MATCH (e31:E31:' + prj + ' {content: $id})-[:P2]->(type:E55)-[:P127]->(:E55 {content:"sourceType"}),\
+						(e31)-[:P1]->(file:E75) RETURN type.content AS type, file';
 
 		neo4j.readTransaction(filequery, {id: req.params.id})
 			.then(function (results) {
 				if (!results[0] && !results[0].file) return Promise.reject('No results');
+				sourceType = results[0].type;
 				fileOld = results[0].file;
 				path += fileOld.path;
 				return Promise.resolve();
@@ -653,23 +693,33 @@ module.exports = {
 				return fs.renameAsync(req.file.path, path + filename);
 			})
 			.then(function () {
-				// create thumbnail
-				return exec(config.exec.ImagickConvert, [path + filename, '-resize', '160x90^', '-gravity', 'center', '-extent', '160x90', path + filenameThumb]);
-			})
-			.then(function () {
-				// downsample preview image
-				return exec(config.exec.ImagickConvert, [path + filename, '-resize', '1024x1024>', path + filenamePreview]);
-			})
-			.then(function () {
-				// sample image to texture with resolution power of 2
-				return utils.resizeToNearestPowerOf2(path, filename, filenameTexture);
-			})
-			.then(function (output) {
-				imgWidth = output.originalWidth;
-				imgHeight = output.originalHeight;
+				if (sourceType === 'text') {
+					// extract first page of pdf as jpg
+					return exec(config.exec.Ghostscript, ['-dNOPAUSE', '-dBATCH', '-sDEVICE=jpeg', '-dLastPage=1', '-sOutputFile=' + path + filenameThumb, path + filename])
+						.then(function () {
+							// create thumbnail
+							return exec(config.exec.ImagickConvert, [path + filenameThumb, '-resize', '160x90^', '-gravity', 'north', '-extent', '160x90', path + filenameThumb]);
+						});
+				}
+				else {
+					// create thumbnail
+					return exec(config.exec.ImagickConvert, [path + filename, '-resize', '160x90^', '-gravity', 'center', '-extent', '160x90', path + filenameThumb])
+						.then(function () {
+							// downsample preview image
+							return exec(config.exec.ImagickConvert, [path + filename, '-resize', '1024x1024>', path + filenamePreview]);
+						})
+						.then(function () {
+							// sample image to texture with resolution power of 2
+							return utils.resizeToNearestPowerOf2(path, filename, filenameTexture);
+						})
+						.then(function (output) {
+							imgWidth = output.originalWidth;
+							imgHeight = output.originalHeight;
 
-				// downsample image to preview texture
-				return exec(config.exec.ImagickConvert, [path + filename, '-resize', '128x128!', path + filenameTexturePreview]);
+							// downsample image to preview texture
+							return exec(config.exec.ImagickConvert, [path + filename, '-resize', '128x128!', path + filenameTexturePreview]);
+						});
+				}
 			})
 			.catch(function (err) {
 				if (err) utils.error.server(res, err, '#source.updateFile fs/exec @ ' + path + filename);
@@ -677,13 +727,41 @@ module.exports = {
 			})
 			.then(function () {
 				// neo4j query
-				var updatequery = 'MATCH (e31:E31:' + prj + ' {content: $id})-[:P1]->(file:E75)\
-					SET file = $file\
-					RETURN file';
+				// noinspection JSAnnotator
+				var updatequery = `
+					MATCH (mUser:E21:`+prj+` {content: $user})-[:P131]->(mUserName:E82)
+					MATCH (e31:E31:`+prj+` {content: $id})-[:P1]->(file:E75)
+					OPTIONAL MATCH (e31)<-[:P31]-(:E11)-[rmp14:P14]->(:E21)
+					SET file = $file
+					DELETE rmp14
+					
+					WITH mUser, mUserName, e31, file
+					MERGE (e31)<-[:P31]-(me11:E11:`+prj+`)-[:P4]->(me52:E52:`+prj+`)-[:P82]->(mDate:E61:`+prj+`)
+						ON CREATE SET me11.content = $me11, me52.content = $me52, mDate.value = $date
+						ON MATCH SET mDate.value = $date
+					CREATE (me11)-[:P14]->(mUser)
+					
+					RETURN file`;
 
 				var params = {
 					id: req.params.id,
-					file: {
+					user: req.headers['x-key'],
+					date: req.body.date,
+					me11: 'e11_m_' + id,
+					me52: 'e52_m_' + id
+				};
+
+				if (sourceType === 'text') {
+					params.file = {
+						content: filename,
+						original: req.file.originalname,
+						path: fileOld.path,
+						thumb: filenameThumb,
+						type: filename.split(".").pop().toLowerCase()
+					};
+				}
+				else {
+					params.file = {
 						content: filename,
 						original: req.file.originalname,
 						path: fileOld.path,
@@ -694,8 +772,8 @@ module.exports = {
 						texture: filenameTexture,
 						texturePreview: filenameTexturePreview,
 						type: filename.split(".").pop().toLowerCase()
-					}
-				};
+					};
+				}
 
 				return neo4j.writeTransaction(updatequery, params);
 			})
@@ -714,6 +792,7 @@ module.exports = {
 			})
 			.then(function (filenames) {
 				Promise.each(filenames, function (fname) {
+					if (!fname) return;
 					fs.existsAsync(path + fname)
 						.then(function (exists) {
 							if (exists) fs.unlinkAsync(path + fname);
