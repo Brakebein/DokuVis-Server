@@ -2,17 +2,6 @@ const config = require('../config');
 const mysql = require('./mysql-request');
 const Promise = require('bluebird');
 const exec = require('child-process-promise').execFile;
-const log4js = require('log4js');
-
-log4js.configure({
-	appenders: [{
-		type: 'stdout'
-	}, {
-		type: 'file', filename: 'logs/api.log'
-	}]
-});
-var logger = log4js.getLogger('API');
-log4js.replaceConsole(logger);
 
 var utils = {
 

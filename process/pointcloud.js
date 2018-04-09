@@ -2,17 +2,27 @@ const config = require('../config');
 const utils = require('../modules/utils');
 const fs = require('fs-extra-promise');
 const exec = require('child-process-promise').execFile;
-
 const log4js = require('log4js');
+
+// logger
 log4js.configure({
-	appenders: [{
-		type: 'stdout'
-	}, {
-		type: 'file', filename: 'logs/pointcloud-process.log'
-	}]
+	appenders: {
+		out: { type: 'console' },
+		logfile: {
+			type: 'file',
+			filename: 'logs/pointcloud-process.log'
+		}
+	},
+	categories: {
+		default: { appenders: ['out', 'logfile'], level: 'all' }
+	}
 });
-const logger = log4js.getLogger('POINTCLOUD PROCESS');
-log4js.replaceConsole(logger);
+const logger = log4js.getLogger('POINTCLOUD');
+console.log = logger.info.bind(logger);
+console.debug = logger.debug.bind(logger);
+console.warn = logger.warn.bind(logger);
+console.error = logger.error.bind(logger);
+
 
 var file = process.argv[2];
 

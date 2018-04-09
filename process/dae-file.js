@@ -9,17 +9,27 @@ const LineByLineReader = require('line-by-line');
 const JSZip = require('jszip');
 const THREE = require('../modules/three');
 const CTMLoader = require('../modules/CTMLoader');
-
 const log4js = require('log4js');
+
+// logger
 log4js.configure({
-	appenders: [{
-		type: 'stdout'
-	}, {
-		type: 'file', filename: 'logs/dae-process.log'
-	}]
+	appenders: {
+		out: { type: 'console' },
+		logfile: {
+			type: 'file',
+			filename: 'logs/dae-processs.log'
+		}
+	},
+	categories: {
+		default: { appenders: ['out', 'logfile'], level: 'all' }
+	}
 });
-const logger = log4js.getLogger('DAE PROCESS');
-log4js.replaceConsole(logger);
+const logger = log4js.getLogger('DAE-PROCESS');
+console.log = logger.info.bind(logger);
+console.debug = logger.debug.bind(logger);
+console.warn = logger.warn.bind(logger);
+console.error = logger.error.bind(logger);
+
 
 // catch uncaught exception and exit properly
 process.on('uncaughtException', function (err) {

@@ -1,6 +1,28 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const log4js = require('log4js');
 
+// logger
+log4js.configure({
+	appenders: {
+		out: { type: 'console' },
+		logfile: {
+			type: 'file',
+			filename: 'logs/server.log'
+		}
+	},
+	categories: {
+		default: { appenders: ['out', 'logfile'], level: 'all' }
+	}
+});
+const logger = log4js.getLogger('DokuVis');
+console.log = logger.info.bind(logger);
+console.debug = logger.debug.bind(logger);
+console.warn = logger.warn.bind(logger);
+console.error = logger.error.bind(logger);
+
+
+// express
 const app = express();
 
 app.use(bodyParser.json({ limit: '50mb' }));
@@ -50,6 +72,7 @@ server.timeout = 600000; // 10 minutes
 // properly shutdown server
 process.on('exit', function () {
 	server.close();
+	log4js.shutdown();
 });
 
 // catch ctrl+c event and exit properly
