@@ -156,15 +156,15 @@ module.exports = {
 				  + '(ttask:E55:'+prj+' {content:"task"}), \
 					(ttdesc:E55:'+prj+' {content:"taskDesc"}), \
 					(ttprior:E55:'+prj+' {content:"taskPriority"}), \
-					(ttphigh:E55:'+prj+' {content:"priority_high", value:"2"}), \
-					(ttpmedium:E55:'+prj+' {content:"priority_medium", value:"1"}), \
-					(ttplow:E55:'+prj+'{content:"priority_low", value:"0"}), \
+					(ttphigh:E55:'+prj+' {content:"priority_high", value: 2}), \
+					(ttpmedium:E55:'+prj+' {content:"priority_medium", value: 1}), \
+					(ttplow:E55:'+prj+'{content:"priority_low", value: 0}), \
 					(ttprior)<-[:P127]-(ttphigh), \
 					(ttprior)<-[:P127]-(ttpmedium), \
 					(ttprior)<-[:P127]-(ttplow), \
 					(ttstatus:E55:'+prj+' {content:"taskStatus"}), \
-					(ttsdone:E55:'+prj+' {content:"status_done", value:"1"}), \
-					(ttstodo:E55:'+prj+' {content:"status_todo", value:"0"}), \
+					(ttsdone:E55:'+prj+' {content:"status_done", value: 1}), \
+					(ttstodo:E55:'+prj+' {content:"status_todo", value: 0}), \
 					(ttstatus)<-[:P127]-(ttsdone), \
 					(ttstatus)<-[:P127]-(ttstodo), '
 					// comments
