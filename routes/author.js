@@ -5,16 +5,16 @@ const shortid = require('shortid');
 module.exports = {
 	
 	query: function (req, res) {
-		var prj = req.params.prj;
+		const prj = req.params.prj;
 
-		var q = 'MATCH (e21:E21:'+prj+')\
-			WHERE NOT (e21)-[:P2]->(:E55 {content: "projectPerson"})\
-			MATCH (e21)-[:P131]->(e82:E82)\
-			OPTIONAL MATCH (e21)<-[:P14]-(events)\
-			RETURN e21.content AS id,\
-				id(e21) AS nodeId,\
-				e82.value AS name,\
-				{ documents: count(events) } AS linkStats';
+		const q = `MATCH (e21:E21:${prj})
+			WHERE NOT (e21)-[:P2]->(:E55 {content: "projectPerson"})
+			MATCH (e21)-[:P131]->(e82:E82)
+			OPTIONAL MATCH (e21)<-[:P14]-(events)
+			RETURN e21.content AS id,
+				id(e21) AS nodeId,
+				e82.value AS name,
+				{ documents: count(events) } AS linkStats`;
 
 		neo4j.readTransaction(q)
 			.then(function (results) {
@@ -26,18 +26,18 @@ module.exports = {
 	},
 	
 	get: function (req, res) {
-		var prj = req.params.prj;
+		const prj = req.params.prj;
 
-		var q = 'MATCH (e21:E21:'+prj+' {content: $id})\
-			WHERE NOT (e21)-[:P2]->(:E55 {content: "projectPerson"})\
-			MATCH (e21)-[:P131]->(e82:E82)\
-			OPTIONAL MATCH (e21)<-[:P14]-(events)\
-			RETURN e21.content AS id,\
-				id(e21) AS nodeId,\
-				e82.value AS name,\
-				{ documents: count(events) } AS linkStats';
+		const q = `MATCH (e21:E21:${prj} {content: $id})
+			WHERE NOT (e21)-[:P2]->(:E55 {content: "projectPerson"})
+			MATCH (e21)-[:P131]->(e82:E82)
+			OPTIONAL MATCH (e21)<-[:P14]-(events)
+			RETURN e21.content AS id,
+				id(e21) AS nodeId,
+				e82.value AS name,
+				{ documents: count(events) } AS linkStats`;
 
-		var params = {
+		const params = {
 			id: req.params.id
 		};
 
@@ -53,17 +53,17 @@ module.exports = {
 	create: function (req, res) {
 		if (!req.body.name) { utils.abort.missingData(res, '#author.create name'); return; }
 
-		var prj = req.params.prj;
-		var id = shortid.generate();
+		const prj = req.params.prj;
+		const id = shortid.generate();
 
-		var q = 'MERGE (e82:E82:'+prj+' {value: $name})<-[:P131]-(e21:E21:'+prj+')\
-				ON CREATE SET e21.content = $e21id, e82.content = $e82id\
-			RETURN e21.content AS id,\
-				id(e21) AS nodeId,\
-				e82.value AS name,\
-				{ documents: 0 } AS linkStats';
+		const q = `MERGE (e82:E82:${prj} {value: $name})<-[:P131]-(e21:E21:${prj})
+				ON CREATE SET e21.content = $e21id, e82.content = $e82id
+			RETURN e21.content AS id,
+				id(e21) AS nodeId,
+				e82.value AS name,
+				{ documents: 0 } AS linkStats`;
 
-		var params = {
+		const params = {
 			name: req.body.name,
 			e21id: 'e21_' + id + '_' + utils.replace(req.body.name),
 			e82id: 'e82_' + id + '_' + utils.replace(req.body.name)
@@ -81,19 +81,19 @@ module.exports = {
 	update: function (req, res) {
 		if (!req.body.name) { utils.abort.missingData(res, '#author.update name'); return; }
 
-		var prj = req.params.prj;
+		const prj = req.params.prj;
 
-		var q = 'MATCH (e21:E21:'+prj+' {content: $id})\
-			WHERE NOT (e21)-[:P2]->(:E55 {content: "projectPerson"})\
-			MATCH (e21)-[:P131]->(e82:E82)\
-			OPTIONAL MATCH (e21)<-[:P14]-(events)\
-			SET e82.value = $name\
-			RETURN e21.content AS id,\
-				id(e21) AS nodeId,\
-				e82.value AS name,\
-				{ documents: count(events) } AS linkStats';
+		const q = `MATCH (e21:E21:${prj} {content: $id})
+			WHERE NOT (e21)-[:P2]->(:E55 {content: "projectPerson"})
+			MATCH (e21)-[:P131]->(e82:E82)
+			OPTIONAL MATCH (e21)<-[:P14]-(events)
+			SET e82.value = $name
+			RETURN e21.content AS id,
+				id(e21) AS nodeId,
+				e82.value AS name,
+				{ documents: count(events) } AS linkStats`;
 
-		var params = {
+		const params = {
 			id: req.params.id,
 			name: req.body.name
 		};
@@ -108,14 +108,14 @@ module.exports = {
 	},
 	
 	delete: function (req, res) {
-		var prj = req.params.prj;
+		const prj = req.params.prj;
 
-		var q = 'MATCH (e21:E21:'+prj+' {content: $id})\
-			WHERE NOT (e21)-[:P2]->(:E55 {content: "projectPerson"})\
-			MATCH (e21)-[:P131]->(e82:E82)\
-			DETACH DELETE e21, e82';
+		const q = `MATCH (e21:E21:${prj} {content: $id})
+			WHERE NOT (e21)-[:P2]->(:E55 {content: "projectPerson"})
+			MATCH (e21)-[:P131]->(e82:E82)
+			DETACH DELETE e21, e82`;
 
-		var params = {
+		const params = {
 			id: req.params.id
 		};
 

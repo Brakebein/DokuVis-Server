@@ -1,4 +1,3 @@
-const config = require('../config');
 const utils = require('../modules/utils');
 const neo4j = require('../modules/neo4j-request');
 const mysql = require('../modules/mysql-request');
@@ -7,41 +6,41 @@ const Promise = require('bluebird');
 module.exports = {
 	
 	query: function (req, res) {
-		var sql = '\
-			SELECT p.name, email, users.name, role FROM projects p \
-			INNER JOIN user_project_role ON p.pid = project_id \
-			INNER JOIN roles ON roles.id = role_id \
-			INNER JOIN users ON users.id = user_id \
-			AND p.proj_tstamp = ? \
-			AND LOWER(users.name) REGEXP ?';
+		const sql = `
+			SELECT p.name, email, users.name, role FROM projects p
+			INNER JOIN user_project_role ON p.pid = project_id
+			INNER JOIN roles ON roles.id = role_id
+			INNER JOIN users ON users.id = user_id
+			AND p.proj_tstamp = ?
+			AND LOWER(users.name) REGEXP ?`;
 
-		var search = '.*';
+		let search = '.*';
 		if (req.query.search)
 			search = '.*' + req.query.search.toLowerCase() + '.*';
 
-		mysql.query(sql, [req.params.id, search])
+		mysql.query(sql, [req.params.prj, search])
 			.then(function (rows) {
 				res.json(rows);
 			})
-			.catch(function(err) {
+			.catch(function (err) {
 				utils.error.mysql(res, err, '#staff.query');
 			});
 	},
 
 	get: function (req, res) {
-		var sql = '\
-		SELECT p.name, email, users.name, role FROM projects p \
-		INNER JOIN user_project_role ON p.pid = project_id \
-		INNER JOIN roles ON roles.id = role_id \
-		INNER JOIN users ON users.id = user_id \
-		AND p.proj_tstamp = ? \
-		AND users.email = ?';
+		const sql = `
+			SELECT p.name, email, users.name, role FROM projects p
+			INNER JOIN user_project_role ON p.pid = project_id
+			INNER JOIN roles ON roles.id = role_id
+			INNER JOIN users ON users.id = user_id
+			AND p.proj_tstamp = ?
+			AND users.email = ?`;
 
-		mysql.query(sql, [req.params.id, req.params.userId])
+		mysql.query(sql, [req.params.prj, req.params.id])
 			.then(function (rows) {
 				res.json(rows[0]);
 			})
-			.catch(function(err) {
+			.catch(function (err) {
 				utils.error.mysql(res, err, '#staff.query');
 			});
 	},
@@ -50,15 +49,15 @@ module.exports = {
 		if (!req.body.user) { utils.abort.missingData(res, '#staff.create body.user'); return; }
 		if (!req.body.role) { utils.abort.missingData(res, '#staff.create body.role'); return; }
 
-		var prj = req.params.id,
+		const prj = req.params.prj,
 			user = req.body.user,
 			role = req.body.role;
 
-		var connection, session, tx;
+		let connection, session, tx;
 		
 		// check if user exists
-		var sql = 'SELECT proj_tstamp, email, users.name AS name, role FROM projects, users, roles \
-		WHERE proj_tstamp = ? AND email = ? AND role = ?';
+		const sql = `SELECT proj_tstamp, email, users.name AS name, role FROM projects, users, roles
+				WHERE proj_tstamp = ? AND email = ? AND role = ?`;
 
 		mysql.query(sql, [prj, user, role])
 			.catch(function (err) {
@@ -76,12 +75,12 @@ module.exports = {
 
 			// create nodes in graph database
 			.then(function (username) {
-				var q = 'MATCH (tpproj:E55:' + prj + ' {content:"projectPerson"}) \
-					CREATE (user:E21:' + prj + ' {content:{userEmail}}), \
-					(username:E82:' + prj + ' {content:"e82_"+{userEmail}, value: {userName}}), \
-					(user)-[:P2]->(tpproj), \
-					(user)-[:P131]->(username)';
-				var params = {
+				const q = `MATCH (tpproj:E55:` + prj + ` {content:"projectPerson"})
+					CREATE (user:E21:` + prj + ` {content:{userEmail}}),
+					(username:E82:` + prj + ` {content:"e82_"+{userEmail}, value: {userName}}),
+					(user)-[:P2]->(tpproj),
+					(user)-[:P131]->(username)`;
+				const params = {
 					userEmail: user,
 					userName: username
 				};
@@ -135,7 +134,7 @@ module.exports = {
 			// everything went well, return success
 			.then(function () {
 				session.close();
-				var message = 'User {' + user + '} joined project {' + prj + '} as {' + role + '}';
+				const message = 'User {' + user + '} joined project {' + prj + '} as {' + role + '}';
 				console.log(message);
 				res.json({ message: message, status: 'SUCCESS' });
 			})
@@ -156,7 +155,7 @@ module.exports = {
 	queryRoles: function (req, res) {
 		mysql.query('SELECT role FROM roles')
 			.then(function (rows) {
-				var roles = rows.map(function (record) {
+				let roles = rows.map(function (record) {
 					return record.role;
 				});
 				res.json(roles);

@@ -14,8 +14,14 @@ process.on('exit', function () {
 });
 
 
+/**
+ * Run cypher query with parameters as READ transaction.
+ * @param query {string} Cypher statement
+ * @param params {Object=} Map with parameters to use in statement
+ * @return {Promise<StatementResult>}
+ */
 function readTransaction(query, params) {
-	var session = driver.session();
+	const session = driver.session();
 
 	return session.readTransaction(function (tx) {
 
@@ -34,8 +40,14 @@ function readTransaction(query, params) {
 	});
 }
 
+/**
+ * Run cypher query with parameters as WRITE transaction.
+ * @param query {string} Cypher statement
+ * @param params {Object=} Map with parameters to use in statement
+ * @return {Promise<StatementResult>}
+ */
 function writeTransaction(query, params) {
-	var session = driver.session();
+	const session = driver.session();
 
 	return session.writeTransaction(function (tx) {
 
@@ -55,8 +67,8 @@ function writeTransaction(query, params) {
 }
 
 function multipleTransactions(statements) {
-	var session = driver.session();
-	var tx = session.beginTransaction();
+	const session = driver.session();
+	const tx = session.beginTransaction();
 	
 	return Promise
 		.mapSeries(statements, function (sm) {
@@ -87,8 +99,8 @@ function extractBoltRecords (data) {
 	if (!Array.isArray(data)) return data;
 
 	return data.map(function (record) {
-		var obj = record.toObject();
-		for (var key in obj) {
+		const obj = record.toObject();
+		for (let key in obj) {
 			obj[key] = convertValues(obj[key]);
 		}
 		return obj;
@@ -112,7 +124,7 @@ function convertValues(value) {
 		});
 	}
 	if (typeof value === 'object') {
-		for (var key in value) {
+		for (let key in value) {
 			value[key] = convertValues(value[key]);
 		}
 	}
@@ -142,7 +154,6 @@ module.exports = {
 	 * @param parameters
 	 */
 	transaction: function (statement, parameters) {
-		var params = parameters || {};
 		return request({
 			method: 'POST',
 			uri: config.neo4j.uriTransaction,
@@ -151,12 +162,16 @@ module.exports = {
 				'Authorization': config.neo4j.auth
 			},
 			body: {
-				statements: [{ statement: statement, parameters: params }]
+				statements: [{ statement: statement, parameters: parameters || {} }]
 			},
 			json: true
 		});
 	},
-	
+
+	/**
+	 * @deprecated
+	 * @param statements
+	 */
 	transactionArray: function (statements) {
 		return request({
 			method: 'POST',

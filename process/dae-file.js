@@ -39,25 +39,25 @@ process.on('uncaughtException', function (err) {
 
 
 // get arguments
-var file = process.argv[2];
-var tid = process.argv[3];
-var path = process.argv[4];
+const file = process.argv[2];
+const tid = process.argv[3];
+const path = process.argv[4];
 
 if (!(file && tid && path)) {
 	process.send({ error: 'arguments missing' });
 	process.exit();
 }
 
-var ctmlloader = new CTMLoader();
+const ctmlloader = new CTMLoader();
 
 // maps/arrays to collect elements
-var effects = {},
+const effects = {},
 	materials = {},
 	images = {},
 	newparams = {},
 	nodes = [],
-	geometryFiles = {},
-	upAxis = '',
+	geometryFiles = {};
+let upAxis = '',
 	unit = {};
 
 
@@ -70,17 +70,17 @@ var effects = {},
 	6. return nodes
 */
 
-var cleanFile = path + 'clean_' + tid + '.dae';
-var assimpFile = path + 'assimp_' + tid + '.dae';
+const cleanFile = path + 'clean_' + tid + '.dae';
+const assimpFile = path + 'assimp_' + tid + '.dae';
 
 cleanGeometries();
 
 // 0. clean geometries from unwanted objects like <lines>
 function cleanGeometries() {
-	var linereader = new LineByLineReader( file );
-	var wstream = fs.createWriteStream( cleanFile );
+	const linereader = new LineByLineReader( file );
+	const wstream = fs.createWriteStream( cleanFile );
 
-	var lineState = false;
+	let lineState = false;
 
 	linereader.on('error', function (err) {
 		process.send({ error: 'LineReader', data: err });
@@ -107,8 +107,6 @@ function cleanGeometries() {
 	});
 }
 
-
-
 // 1. convert with Assimp
 function convertAssimp() {
 	exec(config.exec.Assimp, ['export', cleanFile, assimpFile, '-fi', '-tri', '-rrm', '-jiv'])
@@ -131,20 +129,20 @@ function convertAssimp() {
 
 // 2. extract geometries
 function extractGeometries() {
-	var geoState = {
+	const geoState = {
 		NONE: 0,
 		GEOMETRY: 1,
 		MESH: 2,
 		POLYLIST: 3,
 		LINES: 4
 	};
-	var currentState = geoState.NONE;
-	var currentId = null;
+	let currentState = geoState.NONE;
+	let currentId = null;
 
-	var wstream;
-	var linereader = new LineByLineReader( assimpFile );
+	let wstream;
+	const linereader = new LineByLineReader( assimpFile );
 
-	var tmpPolylist = null;
+	let tmpPolylist = null;
 
 	linereader.on('error', function (err) {
 		process.send({ error: 'LineReader', data: err });
@@ -160,7 +158,7 @@ function extractGeometries() {
 		if (currentState === geoState.NONE) {
 			// <geometry id="geom-foo">
 			if (/<geometry/.test(line)) {
-				var capt = /<geometry.*id="([^"]+)"/.exec(line);
+				const capt = /<geometry.*id="([^"]+)"/.exec(line);
 				currentId = utils.replace(capt[1]);
 				currentState = geoState.GEOMETRY;
 			}
@@ -168,8 +166,8 @@ function extractGeometries() {
 		else if (currentState === geoState.GEOMETRY) {
 			// <mesh>
 			if (/<mesh>/.test(line)) {
-				var basename = tid + '_' + currentId;
-				var daetmp = basename + '_tmp.dae';
+				const basename = tid + '_' + currentId;
+				const daetmp = basename + '_tmp.dae';
 
 				wstream = fs.createWriteStream( path + daetmp );
 				wstream.write('<?xml version="1.0" encoding="utf-8"?>' + "\n");
@@ -220,15 +218,15 @@ function extractGeometries() {
 			if (/<\/polylist>/.test(line)) {
 				tmpPolylist += line;
 
-				var jsPoly = xmljs.xml2js(tmpPolylist);
+				const jsPoly = xmljs.xml2js(tmpPolylist);
 
 				// transform <polylist> into <triangles>
-				var elPoly = jsPoly.elements[0];
+				const elPoly = jsPoly.elements[0];
 				elPoly.name = 'triangles';
 
-				var inputCount = 0;
+				let inputCount = 0;
 
-				for (var i = 0; i < elPoly.elements.length; i++) {
+				for (let i = 0; i < elPoly.elements.length; i++) {
 					if (elPoly.elements[i].name === 'input') {
 						elPoly.elements[i].attributes.offset = inputCount;
 						inputCount++;
@@ -238,7 +236,7 @@ function extractGeometries() {
 						i--;
 					}
 					else if (elPoly.elements[i].name === 'p') {
-						var pArray = elPoly.elements[i].elements[0].text.trim().split(/\s+/);
+						let pArray = elPoly.elements[i].elements[0].text.trim().split(/\s+/);
 						pArray = fillTrianglesArray(pArray, inputCount);
 						elPoly.elements[i].elements[0].text = pArray.join(' ');
 					}
@@ -260,10 +258,10 @@ function extractGeometries() {
 // assimp<>ctm workaround, <triangles> index array
 // duplicate index values to match the number of index values * number of <input> elements
 function fillTrianglesArray(pArray, count) {
-	var result = [];
+	const result = [];
 
 	pArray.forEach(function (value) {
-		for (var i = 0; i < count; i++)
+		for (let i = 0; i < count; i++)
 			result.push(value);
 	});
 
@@ -272,12 +270,12 @@ function fillTrianglesArray(pArray, count) {
 
 // 3. parse DAE file
 function parseDAE() {
-	var stream = fs.createReadStream(assimpFile);
+	const stream = fs.createReadStream(assimpFile);
 	stream.on('close', function () {
 		console.debug('readstream closed');
 	});
 
-	var xml = new XmlStream(stream);
+	const xml = new XmlStream(stream);
 
 	// collect data
 	xml.on('updateElement: up_axis', function (axis) {
@@ -311,7 +309,7 @@ function parseDAE() {
 	xml.collect('node');
 	xml.collect('instance_geometry');
 	xml.on('endElement: visual_scene', function (scene) {
-		for (var i = 0; i < scene.node.length; i++) {
+		for (let i = 0; i < scene.node.length; i++) {
 			if (scene.node[i].$.id)
 				nodes.push(scene.node[i]);
 		}
@@ -329,12 +327,12 @@ function finalize() {
 	Promise.mapSeries(Object.keys(geometryFiles),
 		function (geoId) {
 
-			var geofile = geometryFiles[geoId];
+			const geofile = geometryFiles[geoId];
 			geofile.ctm = geofile.basename + '.ctm';
 
 			// 4. convert to CTM and generate edges
 			return new Promise(function (resolve, reject) {
-				var args = [
+				const args = [
 					path + geofile.dae, path + geofile.ctm,
 					'--method', 'MG2',
 					'--level', '1',
@@ -401,9 +399,9 @@ function finalize() {
 // extract data from dae xml object and prepare nodes
 function prepareNodes(nodes, parentid) {
 
-	for (var i=0; i<nodes.length; i++) {
+	for (let i=0; i<nodes.length; i++) {
 
-		var n = nodes[i];
+		const n = nodes[i];
 		n.id = n.$.id;
 		n.name = n.$.name;
 		n.layer = n.$.layer || undefined;
@@ -411,11 +409,12 @@ function prepareNodes(nodes, parentid) {
 		n.up = upAxis;
 		n.parentid = parentid;
 
+		let m;
 		if (n.matrix instanceof Object)
-			var m = n.matrix.$text.split(/\s+/);
+			m = n.matrix.$text.split(/\s+/);
 		else
 			m = n.matrix.split(/\s+/);
-		var matrix = new THREE.Matrix4().set(
+		const matrix = new THREE.Matrix4().set(
 			+m[0], +m[1], +m[2], +m[3],
 			+m[4], +m[5], +m[6], +m[7],
 			+m[8], +m[9], +m[10], +m[11],
@@ -424,13 +423,13 @@ function prepareNodes(nodes, parentid) {
 
 		// if pivot offset is represented in extra node -> merge nodes
 		if (n.node && n.node[0] && (!n.node[0].$ || !n.node[0].$.id || /\$ColladaAutoName\$/.test(n.node[0].$.id))) {
-			var pivot = n.node[0];
+			const pivot = n.node[0];
 
 			if (pivot.matrix instanceof Object && pivot.matrix.$text)
 				m = pivot.matrix.$text.split(/\s+/);
 			else
 				m = pivot.matrix.split(/\s+/);
-			var pivotMatrix = new THREE.Matrix4().set(
+			const pivotMatrix = new THREE.Matrix4().set(
 				+m[0], +m[1], +m[2], +m[3],
 				+m[4], +m[5], +m[6], +m[7],
 				+m[8], +m[9], +m[10], +m[11],
@@ -440,7 +439,7 @@ function prepareNodes(nodes, parentid) {
 			delete pivot.matrix;
 			delete n.node;
 
-			for (var key in pivot) {
+			for (let key in pivot) {
 				if (pivot.hasOwnProperty(key))
 					n[key] = pivot[key];
 			}
@@ -448,10 +447,10 @@ function prepareNodes(nodes, parentid) {
 
 		// geometry
 		if (n['instance_geometry']) {
-			for (var j = 0; j < n['instance_geometry'].length; j++) {
+			for (let j = 0; j < n['instance_geometry'].length; j++) {
 				n.type = 'object';
 
-				var ig = extractInstanceGeometry(n['instance_geometry'][j]);
+				const ig = extractInstanceGeometry(n['instance_geometry'][j]);
 
 				// geometryUrl
 				if (!n.geometryUrl)
@@ -513,33 +512,33 @@ function prepareNodes(nodes, parentid) {
 }
 
 function extractInstanceGeometry(ig) {
-	var data = {};
+	const data = {};
 	data.geometryUrl = ig.$.url.substring(1);
 	data.files = geometryFiles[utils.replace(data.geometryUrl)];
 
 	// material
 	if(ig.bind_material && ig.bind_material.technique_common.instance_material) {
 
-		var material = {
+		const material = {
 			id: ig.bind_material.technique_common.instance_material.$.target.substring(1)
 		};
 		material.name = materials[material.id].$.name;
 
-		var effect = effects[materials[material.id].instance_effect.$.url.substring(1)];
-		var shading = effect.phong || effect.blinn || effect.lambert;
+		const effect = effects[materials[material.id].instance_effect.$.url.substring(1)];
+		const shading = effect.phong || effect.blinn || effect.lambert;
 
 		if (shading.diffuse.color) {
-			var color = shading.diffuse.color instanceof Object ? shading.diffuse.color.$text.split(/\s+/) : shading.diffuse.color.split(/\s+/);
+			const color = shading.diffuse.color instanceof Object ? shading.diffuse.color.$text.split(/\s+/) : shading.diffuse.color.split(/\s+/);
 			material.color = [ +color[0], +color[1], +color[2], +color[3] ];
 		}
 		else if (shading.diffuse.texture) {
-			var texId = shading.diffuse.texture.$.texture;
+			let texId = shading.diffuse.texture.$.texture;
 			if (texId in images)
 				material.map = images[texId];
 			else {
 				while (!(texId in images)) {
 					if (!(texId in newparams)) break;
-					var np = newparams[texId];
+					const np = newparams[texId];
 					if (np.sampler2D && np.sampler2D.source)
 						texId = np.sampler2D.source;
 					else if (np.surface && np.surface.init_from)
@@ -549,13 +548,13 @@ function extractInstanceGeometry(ig) {
 			}
 		}
 		if (shading.transparent && shading.transparent.texture) {
-			texId = shading.transparent.texture.$.texture;
+			let texId = shading.transparent.texture.$.texture;
 			if (texId in images)
 				material.alphaMap = images[texId];
 			else {
 				while (!(texId in images)) {
 					if (!(texId in newparams)) break;
-					np = newparams[texId];
+					const np = newparams[texId];
 					if (np.sampler2D && np.sampler2D.source)
 						texId = np.sampler2D.source;
 					else if (np.surface && np.surface.init_from)
@@ -564,8 +563,9 @@ function extractInstanceGeometry(ig) {
 				material.alphaMap = images[texId];
 			}
 		}
+
+		data.material = material;
 	}
-	data.material = material;
 
 	return data;
 }
@@ -581,19 +581,19 @@ function generateEdges(path, geofile) {
 				reject('NO_GEO');
 			}
 
-			var edgesGeo = new THREE.EdgesGeometry(geo, 24.0);
+			const edgesGeo = new THREE.EdgesGeometry(geo, 24.0);
 			delete edgesGeo.parameters;
 			
-			var json = edgesGeo.toJSON();
-			var array = json.data.attributes.position.array;
+			const json = edgesGeo.toJSON();
+			const array = json.data.attributes.position.array;
 			// shorten numbers
-			for (var i=0, l=array.length; i<l; i++) {
+			for (let i=0, l=array.length; i<l; i++) {
 				array[i] = parseFloat(array[i].toFixed(3));
 			}
 
-			var zipfile = geofile.basename + '.json.zip';
+			const zipfile = geofile.basename + '.json.zip';
 
-			var zip = new JSZip();
+			const zip = new JSZip();
 			zip.file(geofile.basename + '.json', JSON.stringify(json));
 
 			zip.generateNodeStream({ compression: 'DEFLATE', compressionOptions: { level: 9 } })

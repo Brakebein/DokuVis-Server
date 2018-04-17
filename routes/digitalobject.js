@@ -4,12 +4,11 @@ const neo4j = require('../modules/neo4j-request');
 module.exports = {
 
 	query: function (req, res) {
-		var prj = req.params.prj;
+		const prj = req.params.prj;
 
-		// noinspection JSAnnotator
-		var q = `MATCH (tmodel:E55:`+prj+` {content: 'model'})
+		const q = `MATCH (tmodel:E55:${prj} {content: 'model'})
 			WITH tmodel
-			MATCH (:E7:`+prj+` {content: $subprj})-[:P15]->(devent:D7 {content: $deventId}),
+			MATCH (:E7:${prj} {content: $subprj})-[:P15]->(devent:D7 {content: $deventId}),
 				(devent)-[:L11]->(dobj:D1)-[:P1]->(file:E75),
 				(dobj)-[rmat:P2]->(mat:E57),
 				(dobj)<-[:P106]-(dglob:D1)-[:P2]->(tmodel),
@@ -26,7 +25,7 @@ module.exports = {
 				materials,
 				parent.content AS parent`;
 
-		var params = {
+		const params = {
 			subprj: req.params.subprj,
 			deventId: req.params.id
 		};

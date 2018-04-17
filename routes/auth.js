@@ -4,12 +4,12 @@ const bcrypt = require('bcryptjs');
 const config = require('../config');
 const mysql = require('../modules/mysql-request');
 
-var auth = {
+let auth = {
 	
 	login: function (req, res) {
 		
-		var email = req.body.email || '';
-		var password = req.body.password || '';
+		const email = req.body.email || '';
+		const password = req.body.password || '';
 		
 		if(email === '' || password === '') {
 			res.status(401);
@@ -48,9 +48,9 @@ var auth = {
 	
 	register: function (req, res) {
 		
-		var email = req.body.email || '';
-		var username = req.body.username || '';
-		var password = req.body.password || '';
+		const email = req.body.email || '';
+		const username = req.body.username || '';
+		const password = req.body.password || '';
 		
 		if (email === '' || username === '' || password === '') {
 			res.status(401);
@@ -61,8 +61,8 @@ var auth = {
 			return;
 		}
 		
-		var salt = bcrypt.genSaltSync(10);
-		var hash = bcrypt.hashSync(password, salt);
+		const salt = bcrypt.genSaltSync(10);
+		const hash = bcrypt.hashSync(password, salt);
 		
 		mysql.query('INSERT INTO users(email, name, password) VALUES(?,?,?)', [email, username, hash])
 			.then(function (result) {
@@ -132,8 +132,8 @@ var auth = {
 };
 
 function genToken (user) {
-	var expires = expiresIn(31);
-	var token = jwt.encode({
+	const expires = expiresIn(31);
+	const token = jwt.encode({
 		exp: expires
 	}, config.secret());
 	
@@ -145,7 +145,7 @@ function genToken (user) {
 }
 
 function expiresIn(numDays) {
-	var dateObj = new Date();
+	const dateObj = new Date();
 	return dateObj.setDate(dateObj.getDate() + numDays);
 }
 

@@ -5,19 +5,18 @@ const Promise = require('bluebird');
 module.exports = {
 
 	query: function (req, res) {
-		var prj = req.params.prj,
+		const prj = req.params.prj,
 			subprj = req.params.subprj;
 
-		var promises = [];
+		const promises = [];
 
-		var params = {
+		const params = {
 			subId: subprj === 'master' ? prj : subprj,
 			subproject: subprj
 		};
 
 		// source upload
-		// noinspection JSAnnotator
-		var q = `MATCH (:E7:`+prj+` {content: $subId})-[:P9|P15*]->(e31:E31)<-[:P15]-(upevent:E7)-[:P2]->(:E55 {content: "sourceUpload"}),
+		let q = `MATCH (:E7:${prj} {content: $subId})-[:P9|P15*]->(e31:E31)<-[:P15]-(upevent:E7)-[:P2]->(:E55 {content: "sourceUpload"}),
 			(upevent)-[:P14]->(user:E21)-[:P131]->(userName:E82),
 			(upevent)-[:P4]->(:E52)-[:P82]->(date:E61),
 			(e31)-[:P102]->(title:E35),
@@ -35,8 +34,7 @@ module.exports = {
 		promises.push(neo4j.readTransaction(q, params));
 
 		// source update
-		// noinspection JSAnnotator
-		q = `MATCH (:E7:`+prj+` {content: $subId})-[:P9|P15*]->(e31:E31)<-[:P31]-(upevent:E11),
+		q = `MATCH (:E7:${prj} {content: $subId})-[:P9|P15*]->(e31:E31)<-[:P31]-(upevent:E11),
 			(upevent)-[:P14]->(user:E21)-[:P131]->(userName:E82),
 			(upevent)-[:P4]->(:E52)-[:P82]->(date:E61),
 			(e31)-[:P102]->(title:E35),
@@ -54,8 +52,7 @@ module.exports = {
 		promises.push(neo4j.readTransaction(q, params));
 
 		// model upload
-		// noinspection JSAnnotator
-		q = `MATCH (:E7:`+prj+` {content: $subId})-[:P9|P15*]->(d7:D7),
+		q = `MATCH (:E7:${prj} {content: $subId})-[:P9|P15*]->(d7:D7),
 			(d7)-[:P14]->(user:E21)-[:P131]->(userName:E82),
 			(d7)-[:P4]->(:E52)-[:P82]->(date:E61),
 			(d7)-[:P1]->(title:E41)
@@ -71,8 +68,7 @@ module.exports = {
 		promises.push(neo4j.readTransaction(q, params));
 
 		// version update
-		// noinspection JSAnnotator
-		q = `MATCH (:E7:`+prj+` {content: $subId})-[:P9|P15*]->(d7:D7)<-[:P31]-(upevent:E11),
+		q = `MATCH (:E7:${prj} {content: $subId})-[:P9|P15*]->(d7:D7)<-[:P31]-(upevent:E11),
 			(upevent)-[:P14]->(user:E21)-[:P131]->(userName:E82),
 			(upevent)-[:P4]->(:E52)-[:P82]->(date:E61),
 			(d7)-[:P1]->(title:E41)
@@ -88,8 +84,7 @@ module.exports = {
 		promises.push(neo4j.readTransaction(q, params));
 
 		// task create
-		// noinspection JSAnnotator
-		q = `MATCH (:E7:`+prj+` {content: $subId})-[:P9*]->(task:E7)-[:P2]->(:E55 {content:"task"}),
+		q = `MATCH (:E7:${prj} {content: $subId})-[:P9*]->(task:E7)-[:P2]->(:E55 {content:"task"}),
 			(task)<-[:P94]-(event:E65),
 			(event)-[:P14]->(user:E21)-[:P131]->(userName:E82),
 			(event)-[:P4]->(:E52)-[:P82]->(date:E61),
@@ -106,8 +101,7 @@ module.exports = {
 		promises.push(neo4j.readTransaction(q, params));
 
 		// task update
-		// noinspection JSAnnotator
-		q = `MATCH (:E7:`+prj+` {content: $subId})-[:P9*]->(task:E7)-[:P2]->(:E55 {content:"task"}),
+		q = `MATCH (:E7:${prj} {content: $subId})-[:P9*]->(task:E7)-[:P2]->(:E55 {content:"task"}),
 			(task)<-[:P31]-(upevent:E11),
 			(upevent)-[:P14]->(user:E21)-[:P131]->(userName:E82),
 			(upevent)-[:P4]->(:E52)-[:P82]->(date:E61),
@@ -124,8 +118,7 @@ module.exports = {
 		promises.push(neo4j.readTransaction(q, params));
 
 		// comments
-		// noinspection JSAnnotator
-		q = `MATCH (e33:E33:`+prj+`)-[:P2]->(cType:E55)-[:P127]->(:E55 {content: "commentType"}),
+		q = `MATCH (e33:E33:${prj})-[:P2]->(cType:E55)-[:P127]->(:E55 {content: "commentType"}),
 				(e33)-[:P129*..2]->(target)<-[:P9|P15|L11*]-(project:E7 {content: $subId})
 			OPTIONAL MATCH (project)-[:P9]->(subprj:E7)-[:P9|P15|L11*]->(target),
                (subprj)-[:P2]->(:E55 {content: "subproject"})
@@ -159,7 +152,7 @@ module.exports = {
 				return Promise.reject();
 			})
 			.then(function (results) {
-				var tmp = [];
+				let tmp = [];
 
 				results.forEach(function (rarray) {
 					tmp = tmp.concat(rarray);

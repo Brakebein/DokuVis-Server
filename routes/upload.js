@@ -12,7 +12,7 @@ const mime = require('mime-types');
 module.exports = function (req, res) {
 		
 	utils.log.fileupload(req.file);
-	var file = req.file;
+	const file = req.file;
 
 	// check for essential data
 	// if missing then delete file and abort
@@ -28,12 +28,12 @@ module.exports = function (req, res) {
 		return;
 	}
 
-	var tid = shortid.generate();
-	var shortPath = req.params.prj + '/models/' + uuid() + '/';
-	var path = config.path.data + '/' + shortPath;
-	var filename = tid + '_' + utils.replace(req.file.originalname);
+	const tid = shortid.generate();
+	const shortPath = req.params.prj + '/models/' + uuid() + '/';
+	const path = config.path.data + '/' + shortPath;
+	const filename = tid + '_' + utils.replace(req.file.originalname);
 
-	var params = {
+	const params = {
 		prj: req.params.prj,
 		subprj: req.params.subprj,
 		tid: tid,
@@ -63,14 +63,12 @@ module.exports = function (req, res) {
 						.then(function (result) {
 							return writeToDB(result, params);
 						});
-					break;
 
 				case 'application/zip':
 					return processZip(params)
 						.then(function (result) {
 							return writeToDB(result, params);
 						});
-					break;
 
 				default:
 					utils.abort.unsupportedFile(res, '#upload.model ' + file.originalname);
@@ -130,11 +128,11 @@ module.exports = function (req, res) {
 function processDae(params) {
 	return new Promise(function (resolve, reject) {
 		// initialize process to handle dae file
-		var forkDae = fork('process/dae-file', [ params.path + params.filename, params.tid, params.path ]);
+		const forkDae = fork('process/dae-file', [ params.path + params.filename, params.tid, params.path ]);
 
 		forkDae.on('message', function (response) {
 			console.debug('PARENT got message');
-			if(response.error)
+			if (response.error)
 				reject({
 					code: 'DAE-PROCESS',
 					data: response
@@ -144,7 +142,7 @@ function processDae(params) {
 		});
 
 		forkDae.on('close', function (code) {
-			if(code)
+			if (code)
 				reject({
 					code: 'DAE-PROCESS',
 					message: 'child process exited with code ' + code
@@ -155,8 +153,8 @@ function processDae(params) {
 }
 
 function processZip(params) {
-	var daeTmpFile = params.path + params.tid + '_tmp.dae';
-	var zipObj;
+	const daeTmpFile = params.path + params.tid + '_tmp.dae';
+	let zipObj;
 
 	return fs.readFileAsync(params.path + params.filename)
 		.then(function (data) {
@@ -165,7 +163,7 @@ function processZip(params) {
 		.then(function (zip) {
 			// extract dae file
 			zipObj = zip;
-			var daeResults = zip.file(/.+\.dae$/i);
+			const daeResults = zip.file(/.+\.dae$/i);
 			if (daeResults[0])
 				return daeResults[0].async('nodebuffer');
 			else
@@ -181,7 +179,7 @@ function processZip(params) {
 			// process dae
 			return new Promise(function (resolve, reject) {
 
-				var forkDae = fork('process/dae-file', [daeTmpFile, params.tid, params.path]);
+				const forkDae = fork('process/dae-file', [daeTmpFile, params.tid, params.path]);
 
 				forkDae.on('message', function (response) {
 					console.debug('PARENT got message');
@@ -211,8 +209,8 @@ function processZip(params) {
 			});
 			
 			// extract and process images/textures
-			var imgUrls = [];
-			for (var key in result.images) {
+			const imgUrls = [];
+			for (let key in result.images) {
 				if (result.images.hasOwnProperty(key))
 					// console.debug(result.images[key]);
 					imgUrls.push(result.images[key]);
@@ -236,10 +234,10 @@ function processZip(params) {
 
 // extract image from zip and resize
 function extractImage(zipObj, imageUrl, params) {
-	var imgFile = params.path + 'maps/' + params.tid + '_' + imageUrl;
-	var imgResults = zipObj.file(new RegExp("^(.*\\/)?" + imageUrl + "$"));
+	const imgFile = params.path + 'maps/' + params.tid + '_' + imageUrl;
+	const imgResults = zipObj.file(new RegExp("^(.*\\/)?" + imageUrl + "$"));
 
-	if(!imgResults[0])
+	if (!imgResults[0])
 		return Promise.reject({
 			code: 'IMAGE-EXTRACT',
 			message: imageUrl + ' not found in zip file!'
@@ -277,57 +275,59 @@ function updateMapValues(objs, oldName, newName) {
 }
 
 function writeToDB(data, p) {
-	var prj = p.prj;
-	var statements = [];
+	const prj = p.prj;
+	const statements = [];
 
 	statements.push(createEventStatement(p));
 
 	function prepareStatements(nodes) {
-		for (var i = 0; i < nodes.length; i++) {
-			var n = nodes[i];
+		for (let i = 0; i < nodes.length; i++) {
+			const n = nodes[i];
 
 			// skip cameras and lights
 			if (n.type === 'camera' || n.type === 'light')
 				continue;
 
 			// create digital object
-			var q = 'MATCH (tmodel:E55:'+prj+' {content: "model"}),\
-				(devent:D7:'+prj+' {content: $deventId})\
-			OPTIONAL MATCH path = (devent)-[:P134*1..]->(:D7)-[:L11]->(dobjOld:D1 {id: $obj.id})<-[:P106]-(dglobOld:D1)-[:P2]->(tmodel)\
-			WITH devent, dobjOld, dglobOld, tmodel, path\
-			ORDER BY length(path)\
-			LIMIT 1\
-			\
-			MERGE (dobj:D1:'+prj+' {content: $obj.content})\
-				ON CREATE SET dobj = $obj\
-			MERGE (file:E75:'+prj+' {content: $file.content})\
-				ON CREATE SET file = $file\
-			CREATE (devent)-[:L11]->(dobj),\
-				(dobj)-[:P1]->(file)\
-			\
-			FOREACH (parentId IN $parentId |\
-				MERGE (parent:D1:'+prj+' {content: parentId})\
-				CREATE (parent)-[:P106]->(dobj)\
-			)\
-			FOREACH (ignoreMe IN CASE WHEN dobjOld IS NOT NULL THEN [1] ELSE [] END |\
-				CREATE (devent)-[:L10]->(dobjOld),\
-				(dobj)<-[:P106]-(dglobOld)\
-			)\
-			FOREACH (ignoreMe IN CASE WHEN dobjOld IS NULL THEN [1] ELSE [] END |\
-				CREATE (dobj)<-[:P106]-(dglob:D1:'+prj+' {content: $dglobid})-[:P2]->(tmodel),\
-					(dglob)-[:P67]->(e22:E22:'+prj+' {content: $e22id})\
-			)\
-			\
-			WITH dobj\
-			UNWIND range(0, size($materials) - 1) AS i\
-			MERGE (e57:E57:'+prj+' {content: $materials[i].content})\
-				ON CREATE SET e57 = $materials[i]\
-			CREATE (dobj)-[:P2 {order: i}]->(e57)\
-			\
-			RETURN DISTINCT dobj';
+			const q = `MATCH (tmodel:E55:${prj} {content: "model"}),
+				(devent:D7:${prj} {content: $deventId})
+			OPTIONAL MATCH path = (devent)-[:P134*1..]->(:D7)-[:L11]->(dobjOld:D1 {id: $obj.id})<-[:P106]-(dglobOld:D1)-[:P2]->(tmodel)
+			WITH devent, dobjOld, dglobOld, tmodel, path
+			ORDER BY length(path)
+			LIMIT 1
+			
+			MERGE (dobj:D1:${prj} {content: $obj.content})
+				ON CREATE SET dobj = $obj
+			MERGE (file:E75:${prj} {content: $file.content})
+				ON CREATE SET file = $file
+			CREATE (devent)-[:L11]->(dobj),
+				(dobj)-[:P1]->(file)
+			
+			FOREACH (parentId IN $parentId |
+				MERGE (parent:D1:${prj} {content: parentId})
+				CREATE (parent)-[:P106]->(dobj)
+			)
+			
+			WITH devent, dobj, dobjOld, dglobOld, tmodel
+			CALL apoc.do.when(dobjOld IS NOT NULL,
+				'CREATE (devent)-[:L10]->(dobjOld),
+					(dobj)<-[:P106]-(dglobOld)
+					RETURN dobj',
+				'CREATE (dobj)<-[:P106]-(dglob:D1:${prj} {content: _dglobid})-[:P2]->(tmodel),
+					(dglob)-[:P67]->(e22:E22:${prj} {content: _e22id})
+					RETURN dobj',
+				{devent: devent, dobj: dobj, dobjOld: dobjOld, dglobOld: dglobOld, tmodel: tmodel, _dglobid: $dglobid, _e22id: $e22id }) YIELD value
+			
+			WITH value.dobj AS dobj
+			UNWIND range(0, size($materials) - 1) AS i
+			MERGE (e57:E57:${prj} {content: $materials[i].content})
+				ON CREATE SET e57 = $materials[i]
+			CREATE (dobj)-[:P2 {order: i}]->(e57)
+			
+			RETURN DISTINCT dobj`;
 
-			var ctm = p.filename;
-			var edges = undefined;
+			let ctm = p.filename;
+			let edges = undefined;
 			if (n.files) {
 				if (Array.isArray(n.files)) {
 					ctm = n.files.map(function (f) { return f.ctm; });
@@ -339,7 +339,7 @@ function writeToDB(data, p) {
 				}
 			}
 
-			var params = {
+			const params = {
 				deventId: 'd7_' + p.tid,
 				parentId: n.parentid ? ['d1_' + p.tid + '_' + utils.replace(n.parentid)] : [],
 				dglobid: 'd1_glob_' + p.tid + '_' + utils.replace(n.id),
@@ -366,7 +366,7 @@ function writeToDB(data, p) {
 			};
 
 			if (n.material) {
-				var mats = Array.isArray(n.material) ? n.material : [n.material];
+				const mats = Array.isArray(n.material) ? n.material : [n.material];
 				params.materials = mats.map(function (m) {
 					return {
 						content: 'e57_' + p.tid + '_' + utils.replace(m.id),
@@ -402,28 +402,27 @@ function writeToDB(data, p) {
 }
 
 function createEventStatement(p) {
-	var prj = p.prj;
+	const prj = p.prj;
 
 	// create event
-	var q = 'MATCH (user:E21:'+prj+' {content: $user}),\
-			(subprj:E7:'+prj+' {content: $subprj})\
-		OPTIONAL MATCH (pre:D7:'+prj+' {content: $predecessor})\
-		CREATE (devent:D7:'+prj+' {content: $deventId})-[:P14]->(user),\
-			(devent)-[:P4]->(:E52:'+prj+' {content: $e52id})-[:P82]->(:E61:'+prj+' {value: $date}),\
-			(devent)<-[:P15]-(subprj),\
-			(devent)-[:P1]->(:E41:'+prj+' $summary),\
-			(devent)-[:P3]->(:E62:'+prj+' $note)\
-		FOREACH (sw IN $software |\
-			MERGE (software:D14:'+prj+' {value: sw.value})\
-				ON CREATE SET software.content = sw.content\
-			CREATE (devent)-[:L23]->(software)\
-		)\
-		FOREACH (ignoreMe IN CASE WHEN pre IS NOT NULL THEN [1] ELSE [] END |\
-			CREATE (devent)-[:P134]->(pre)\
-		)\
-		RETURN devent';
+	const q = `MATCH (user:E21:${prj} {content: $user}),
+			(subprj:E7:${prj} {content: $subprj})
+		OPTIONAL MATCH (pre:D7:${prj} {content: $predecessor})
+		CREATE (devent:D7:${prj} {content: $deventId})-[:P14]->(user),
+			(devent)-[:P4]->(:E52:${prj} {content: $e52id})-[:P82]->(:E61:${prj} {value: $date}),
+			(devent)<-[:P15]-(subprj),
+			(devent)-[:P1]->(:E41:${prj} $summary),
+			(devent)-[:P3]->(:E62:${prj} $note)
+		FOREACH (sw IN $software |
+			MERGE (software:D14:${prj} {value: sw.value})
+				ON CREATE SET software.content = sw.content
+			CREATE (devent)-[:L23]->(software)
+		)
+		WITH devent, pre
+		CALL apoc.do.when(pre IS NOT NULL, 'CREATE (devent)-[:P134]->(pre) RETURN devent', 'RETURN devent', {devent: devent, pre: pre}) YIELD value
+		RETURN value.devent AS devent`;
 
-	var params = {
+	const params = {
 		user: p.user,
 		subprj: p.subprj,
 		predecessor: p.body.predecessor || '_',// ? p.body.predecessor : null,

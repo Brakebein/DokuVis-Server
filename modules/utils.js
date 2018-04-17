@@ -1,13 +1,12 @@
 const config = require('../config');
-const mysql = require('./mysql-request');
 const Promise = require('bluebird');
 const exec = require('child-process-promise').execFile;
 
-var utils = {
+let utils = {
 
 	error: {
 		mysql: function (res, err, code) {
-			var message = 'MySQL failure';
+			let message = 'MySQL failure';
 			if (code) message += ' ' + code;
 			console.error(message, "\n", err);
 			res.status(500);
@@ -17,7 +16,7 @@ var utils = {
 			});
 		},
 		neo4j: function (res, err, code) {
-			var message = 'Neo4j failure';
+			let message = 'Neo4j failure';
 			if (code) message += ' ' + code;
 			console.error(message, "\n", err);
 			res.status(500);
@@ -27,7 +26,7 @@ var utils = {
 			});
 		},
 		server: function (res, err, code) {
-			var message = 'server failure';
+			let message = 'Server failure';
 			if (code) message += ' ' + code;
 			console.error(message, "\n", err);
 			res.status(500);
@@ -48,7 +47,7 @@ var utils = {
 
 	abort: {
 		missingData: function (res, add) {
-			var message = 'Missing essential data';
+			let message = 'Missing essential data';
 			if (add) message += ' | ' + add;
 			console.warn(message);
 			res.status(510);
@@ -57,7 +56,7 @@ var utils = {
 			});
 		},
 		unsupportedFile: function (res, add) {
-			var message = 'Unsupported file format';
+			let message = 'Unsupported file format';
 			if (add) message += ' | ' + add;
 			console.warn(message);
 			res.status(415);
@@ -81,51 +80,9 @@ var utils = {
 	},
 	
 	replace: function (string) {
-		return string.replace(/[^a-zA-Z0-9_\-\.]/g, '_');
+		return string.replace(/[^a-zA-Z0-9_\-.]/g, '_');
 	}
 
-};
-
-/**
- * @deprecated
- * @param req
- * @param res
- * @param role
- */
-utils.checkPermission = function (req, res, role) {
-	var user = req.headers['x-key'] || '';
-	var prj = req.params.id;
-
-	if(!(role instanceof Array)) role = [role];
-	
-	var roles = ['superadmin'];
-	if(role.indexOf('admin') !== -1) roles.push('admin');
-	if(role.indexOf('historian') !== -1) roles.push('historian');
-	if(role.indexOf('modeler') !== -1) roles.push('modeler');
-	if(role.indexOf('visitor') !== -1) roles.push('admin', 'historian', 'modeler', 'visitor');
-
-	var sql = '\
-		SELECT p.proj_tstamp, u.email, r.role FROM users u \
-		INNER JOIN user_project_role upr ON u.id = upr.user_id AND u.email = ? \
-		INNER JOIN projects p ON p.pid = upr.project_id AND p.proj_tstamp = ? \
-		INNER JOIN roles r ON r.id = upr.role_id AND r.role IN ?';
-
-	return mysql.query(sql, [user, prj, [roles]]).catch(function (err) {
-		utils.error.mysql(res, err, '#utils.checkPermission');
-		return Promise.reject();
-	}).then(function (rows) {
-		if(rows.length === 1) return Promise.resolve();
-		else {
-			var message = 'No Permission ' + user + ' ' + prj + ' ' + req.method + ' ' + req.originalUrl;
-			console.warn(message);
-			res.status(403);
-			res.json({
-				message: 'No Permission!',
-				error: message
-			});
-			return Promise.reject();
-		}
-	});
 };
 
 /**

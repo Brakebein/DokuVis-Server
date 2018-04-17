@@ -11,15 +11,14 @@ const THREE = require('../modules/three');
 module.exports = {
 	
 	query: function (req, res) {
-		var prj = req.params.prj;
-		var subprj = req.params.subprj;
+		const prj = req.params.prj;
+		const subprj = req.params.subprj;
 
 		// TODO: plan3d obsolete
 		// TODO: merge E31 with E36/E33
 		// TODO: E11 Modification -> E7 Activity with type sourceEdit
 
-		// noinspection JSAnnotator
-		var q = `MATCH (e31:E31:`+prj+`)-[:P2]->(type:E55)-[:P127]->(:E55 {content:"sourceType"}),
+		const q = `MATCH (e31:E31:${prj})-[:P2]->(type:E55)-[:P127]->(:E55 {content:"sourceType"}),
 			(e31)<-[:P15]-(:E7 {content: $subprj}),
 			(e31)-[:P102]->(title:E35),
 			(e31)-[:P1]->(file:E75),
@@ -62,7 +61,7 @@ module.exports = {
 				{id: user.content, name: userName.value, date: upDate.value} AS created,
 				{id: mUser.content, name: mUserName.value, date: mDate.value} AS modified`;
 
-		var params = {
+		const params = {
 			subprj: subprj === 'master' ? prj : subprj
 		};
 
@@ -76,11 +75,10 @@ module.exports = {
 	},
 
 	get: function (req, res) {
-		var prj = req.params.prj;
-		var subprj = req.params.subprj;
+		const prj = req.params.prj;
+		const subprj = req.params.subprj;
 
-		// noinspection JSAnnotator
-		var q = `MATCH (e31:E31:`+prj+` {content: $id})-[:P2]->(type:E55)-[:P127]->(:E55 {content:"sourceType"}),
+		const q = `MATCH (e31:E31:${prj} {content: $id})-[:P2]->(type:E55)-[:P127]->(:E55 {content:"sourceType"}),
 			(e31)-[:P102]->(title:E35),
 			(e31)-[:P1]->(file:E75),
 			(e31)<-[:P94]-(e65:E65),
@@ -125,7 +123,7 @@ module.exports = {
 				{id: user.content, name: userName.value, date: upDate.value} AS created,
 				{id: mUser.content, name: mUserName.value, date: mDate.value} AS modified`;
 
-		var params = {
+		const params = {
 			subprj: subprj === 'master' ? prj : subprj,
 			id: req.params.id
 		};
@@ -146,8 +144,8 @@ module.exports = {
 
 		utils.log.fileupload(req.file);
 
-		var prj = req.params.prj;
-		var id = shortid.generate();
+		const prj = req.params.prj;
+		const id = shortid.generate();
 
 		// check for essential data
 		// if missing then delete file and abort
@@ -164,15 +162,15 @@ module.exports = {
 		}
 		
 		// path + filenames
-		var shortPath = prj + '/sources/' + uuid() + '/';
-		var path = config.path.data + '/' + shortPath;
-		var filename = id + '_' + utils.replace(req.file.originalname);
-		var filenameThumb = filename.slice(0, filename.lastIndexOf(".")) + '_thumb.jpg';
-		var filenamePreview = filename.slice(0, filename.lastIndexOf(".")) + '_preview.jpg';
-		var filenameTexture = filename.slice(0, filename.lastIndexOf(".")) + '_tex.jpg';
-		var filenameTexturePreview = filename.slice(0, filename.lastIndexOf(".")) + '_tex_preview.jpg';
+		const shortPath = prj + '/sources/' + uuid() + '/';
+		const path = config.path.data + '/' + shortPath;
+		const filename = id + '_' + utils.replace(req.file.originalname);
+		const filenameThumb = filename.slice(0, filename.lastIndexOf(".")) + '_thumb.jpg';
+		const filenamePreview = filename.slice(0, filename.lastIndexOf(".")) + '_preview.jpg';
+		const filenameTexture = filename.slice(0, filename.lastIndexOf(".")) + '_tex.jpg';
+		const filenameTexturePreview = filename.slice(0, filename.lastIndexOf(".")) + '_tex_preview.jpg';
 
-		var imgWidth, imgHeight;
+		let imgWidth, imgHeight;
 
 		// create folder
 		fs.ensureDirAsync(path)
@@ -218,7 +216,7 @@ module.exports = {
 				// neo4j query
 
 				// match types, project, and user
-				var q = 'MATCH (type:E55:'+prj+' {content: $sourceType}), \
+				let q = 'MATCH (type:E55:'+prj+' {content: $sourceType}), \
 						(sub:E7:'+prj+' {content: $subprj}), \
 						(user:E21:'+prj+' {content: $user})-[:P131]->(userName:E82), \
 						(su:E55:'+prj+' {content: "sourceUpload"}), \
@@ -311,7 +309,7 @@ module.exports = {
 				q += '$tags AS tags, \
 					{id: user.content, name: userName.value, date: upDate.value} AS user';
 
-				var params = {
+				const params = {
 					subprj: req.params.subprj === 'master' ? prj : req.params.subprj,
 					user: req.headers['x-key'],
 					e31id: 'e31_' + filename,
@@ -416,10 +414,10 @@ module.exports = {
 	},
 
 	update: function (req, res) {
-		var prj = req.params.prj;
-		var mId = shortid.generate();
+		const prj = req.params.prj;
+		const mId = shortid.generate();
 
-		var q = 'MATCH (st:E55:'+prj+' {content: "sourceType"}),\
+		let q = 'MATCH (st:E55:'+prj+' {content: "sourceType"}),\
 				(sc:E55:'+prj+' {content: "sourceComment"}),\
 				(sr:E55:'+prj+' {content: "sourceRepros"}),\
 				(sp:E55:'+prj+' {content: "primarySource"}),\
@@ -534,7 +532,7 @@ module.exports = {
 			{id: cUser.content, name: cUserName.value, date: cDate.value} AS created,\
 			{id: mUser.content, name: mUserName.value, date: mDate.value} AS modified';
 
-		var params = {
+		const params = {
 			user: req.headers['x-key'],
 			id: req.params.id,
 			type: req.body.type,
@@ -573,48 +571,49 @@ module.exports = {
 	},
 
 	delete: function (req, res) {
-		var prj = req.params.prj;
+		const prj = req.params.prj;
 
 		// TODO: handle spazialized plan/foto and comments (-> trigger?)
+		// TODO: CALL apoc.do.when
 
-		var q = 'MATCH (e31:E31:'+prj+' {content: $id})-[:P70]->(lv), \
-				(e31)-[:P102]->(title:E35), \
-				(e31)-[:P1]->(file:E75), \
-				(e31)<-[:P94]-(e65:E65), \
-				(e31)<-[:P128]-(e84:E84) \
-			OPTIONAL MATCH (e65)-[:P14]->(author:E21)-[:P131]->(aname:E82) \
-			OPTIONAL MATCH (e65)-[:P7]->(place:E53)-[:P87]->(pname:E48) \
-			OPTIONAL MATCH (e65)-[:P4]->(e52:E52)-[:P82]->(date:E61) \
-			OPTIONAL MATCH (date)<-[rdate:P82]-() \
-			OPTIONAL MATCH (e84)-[:P48]->(archivenr:E42) \
-			OPTIONAL MATCH (archivenr)<-[ranr:P48]-()\
-			OPTIONAL MATCH (e31)-[:P106]->(spatial:E73)-[:P2]->(:E55 {content: "spatializeInfo"})\
-			OPTIONAL MATCH (e31)-[:P3]->(note:E62)-[:P3_1]->({content: "sourceComment"}) \
-			OPTIONAL MATCH (e31)-[:P3]->(repros:E62)-[:P3_1]->({content: "sourceRepros"}) \
-			OPTIONAL MATCH (e84)<-[:P46]-(e78:E78)-[:P1]->(coll:E41), \
-				(e78)-[:P52]->(:E40)-[:P131]->(inst:E82) \
-			OPTIONAL MATCH (e31)<-[:P129]-(ce33:E33)-[:P2]->(:E55 {content: "commentSource"}) \
-			OPTIONAL MATCH (e31)<-[:P15]-(upe7:E7)-[:P2]->(:E55 {content: "sourceUpload"}), \
-				(upe7)-[:P4]->(upe52:E52)-[:P82]->(upDate:E61) \
-			OPTIONAL MATCH (e31)<-[:P31]-(me11:E11)-[:P4]->(me52:E52)-[:P82]->(mDate:E61)\
-			\
-			DETACH DELETE e31, lv, title, note, repros, e65, e84, e52, \
-				upe7, upe52, upDate, me11, me52, mDate, spatial \
-			\
-			WITH file, file.path AS path, date, count(rdate) AS rdcount, archivenr, count(ranr) AS racount\
-			FOREACH (ignoreMe IN CASE WHEN rdcount < 2 THEN [date] ELSE [] END |\
-				DETACH DELETE date )\
-			FOREACH (ignoreMe IN CASE WHEN racount < 2 THEN [archivenr] ELSE [] END |\
-				DETACH DELETE archivenr )\
-			DETACH DELETE file\
-			\
-			RETURN path';
+		const q = `MATCH (e31:E31:${prj} {content: $id})-[:P70]->(lv),
+				(e31)-[:P102]->(title:E35),
+				(e31)-[:P1]->(file:E75),
+				(e31)<-[:P94]-(e65:E65),
+				(e31)<-[:P128]-(e84:E84)
+			OPTIONAL MATCH (e65)-[:P14]->(author:E21)-[:P131]->(aname:E82)
+			OPTIONAL MATCH (e65)-[:P7]->(place:E53)-[:P87]->(pname:E48)
+			OPTIONAL MATCH (e65)-[:P4]->(e52:E52)-[:P82]->(date:E61)
+			OPTIONAL MATCH (date)<-[rdate:P82]-()
+			OPTIONAL MATCH (e84)-[:P48]->(archivenr:E42)
+			OPTIONAL MATCH (archivenr)<-[ranr:P48]-()
+			OPTIONAL MATCH (e31)-[:P106]->(spatial:E73)-[:P2]->(:E55 {content: "spatializeInfo"})
+			OPTIONAL MATCH (e31)-[:P3]->(note:E62)-[:P3_1]->({content: "sourceComment"})
+			OPTIONAL MATCH (e31)-[:P3]->(repros:E62)-[:P3_1]->({content: "sourceRepros"})
+			OPTIONAL MATCH (e84)<-[:P46]-(e78:E78)-[:P1]->(coll:E41),
+				(e78)-[:P52]->(:E40)-[:P131]->(inst:E82)
+			OPTIONAL MATCH (e31)<-[:P129]-(ce33:E33)-[:P2]->(:E55 {content: "commentSource"})
+			OPTIONAL MATCH (e31)<-[:P15]-(upe7:E7)-[:P2]->(:E55 {content: "sourceUpload"}),
+				(upe7)-[:P4]->(upe52:E52)-[:P82]->(upDate:E61)
+			OPTIONAL MATCH (e31)<-[:P31]-(me11:E11)-[:P4]->(me52:E52)-[:P82]->(mDate:E61)
+			
+			DETACH DELETE e31, lv, title, note, repros, e65, e84, e52,
+				upe7, upe52, upDate, me11, me52, mDate, spatial
+			
+			WITH file, file.path AS path, date, count(rdate) AS rdcount, archivenr, count(ranr) AS racount
+			FOREACH (ignoreMe IN CASE WHEN rdcount < 2 THEN [date] ELSE [] END |
+				DETACH DELETE date )
+			FOREACH (ignoreMe IN CASE WHEN racount < 2 THEN [archivenr] ELSE [] END |
+				DETACH DELETE archivenr )
+			DETACH DELETE file
+			
+			RETURN path`;
 
-		var params = {
+		const params = {
 			id: req.params.id
 		};
 
-		var path = config.path.data + '/';
+		let path = config.path.data + '/';
 
 		neo4j.writeTransaction(q, params)
 			.catch(function (err) {

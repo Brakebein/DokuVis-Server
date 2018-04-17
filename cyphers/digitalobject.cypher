@@ -12,10 +12,10 @@ FOREACH (sw IN $software |
     ON CREATE SET software.content = sw.content
   CREATE (devent)-[:L23]->(software)
 )
-FOREACH (ignoreMe IN CASE WHEN pre IS NOT NULL THEN [1] ELSE [] END |
-  CREATE (devent)-[:P134]->(pre)
-)
-RETURN devent;
+WITH devent, pre
+CALL apoc.do.when(pre IS NOT NULL, 'CREATE (devent)-[:P134]->(pre) RETURN devent', 'RETURN devent', {devent: devent, pre: pre}) YIELD value
+RETURN value.devent AS devent;
+
 
 // create digital object
 MATCH (tmodel:E55:Proj_q66NrRJ {content: 'model'}),
@@ -36,16 +36,18 @@ FOREACH (parentId IN $parentId |
   MERGE (parent:D1 {content: parentId})
   CREATE (parent)-[:P106]->(dobj)
 )
-FOREACH (ignoreMe IN CASE WHEN dobjOld IS NOT NULL THEN [1] ELSE [] END |
-  CREATE (devent)-[:L10]->(dobjOld),
-         (dobj)<-[:P106]-(dglobOld)
-)
-FOREACH (ignoreMe IN CASE WHEN dobjOld IS NULL THEN [1] ELSE [] END |
-  CREATE (dobj)<-[:P106]-(dglob:D1 {content: $dglobid})-[:P2]->(tmodel),
-         (dglob)-[:P67]->(e22:E22 {content: $e22id})
-)
 
-WITH dobj
+WITH devent, dobj, dobjOld, dglobOld, tmodel
+CALL apoc.do.when(dobjOld IS NOT NULL,
+'CREATE (devent)-[:L10]->(dobjOld),
+  (dobj)<-[:P106]-(dglobOld)
+  RETURN dobj',
+'CREATE (dobj)<-[:P106]-(dglob:D1:${prj} {content: _dglobid})-[:P2]->(tmodel),
+  (dglob)-[:P67]->(e22:E22:${prj} {content: _e22id})
+  RETURN dobj',
+{devent: devent, dobj: dobj, dobjOld: dobjOld, dglobOld: dglobOld, tmodel: tmodel, _dglobid: $dglobid, _e22id: $e22id }) YIELD value
+
+WITH value.dobj AS dobj
 UNWIND range(0, size($materials) - 1) AS i
 MERGE (e57:E57 {content: $materials[i].content})
   ON CREATE SET e57 = $materials[i]

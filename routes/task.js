@@ -5,11 +5,10 @@ const shortid = require('shortid');
 module.exports = {
 
 	query: function (req, res) {
-		var prj = req.params.id;
+		const prj = req.params.prj;
 
-		//noinspection JSAnnotator
-		var q = `
-		MATCH (task:E7:`+prj+`)-[:P2]->(ttask:E55)
+		const q = `
+		MATCH (task:E7:${prj})-[:P2]->(ttask:E55)
 		WHERE ttask.content = "task" OR ttask.content = "subproject"
 		WITH task, ttask
 		MATCH (task)-[:P1]->(title:E41),
@@ -50,11 +49,10 @@ module.exports = {
 	},
 
 	get: function (req, res) {
-		var prj = req.params.id;
+		const prj = req.params.prj;
 
-		//noinspection JSAnnotator
-		var q = `
-		MATCH (task:E7:`+prj+` {content: {taskId}})-[:P2]->(ttask:E55 {content: "task"}),
+		const q = `
+		MATCH (task:E7:${prj} {content: {taskId}})-[:P2]->(ttask:E55 {content: "task"}),
 			(task)-[:P1]->(title:E41),
     		(task)-[:P3]->(desc:E62)-[:P3_1]->(:E55 {content: "taskDesc"}),
       		(task)-[:P4]->(:E52)-[:P81]->(time:E61),
@@ -78,8 +76,8 @@ module.exports = {
        		{id: cUser.content, name: cUserName.value, date: cDate.value} AS created,
        		{id: mUser.content, name: mUserName.value, date: mDate.value} AS modified`;
 
-		var params = {
-			taskId: req.params.tid
+		const params = {
+			taskId: req.params.id
 		};
 
 		neo4j.readTransaction(q, params)
@@ -97,38 +95,37 @@ module.exports = {
 		if (!req.body.from || !req.body.to) { utils.abort.missingData(res, '#task.create body.from|body.to'); return; }
 		if (!req.body.parent) { utils.abort.missingData(res, '#task.create body.parent'); return; }
 
-		var prj = req.params.id;
-		var id = 'task_' + shortid.generate();
+		const prj = req.params.prj;
+		const id = 'task_' + shortid.generate();
 
-		var priority = 'priority_low';
+		let priority = 'priority_low';
 		if (req.body.priority === 1)
 			priority = 'priority_medium';
 		else if (req.body.priority === 2)
 			priority = 'priority_high';
 
-		//noinspection JSAnnotator
-		var q = `
-		MATCH (editor:E21:`+prj+`)-[:P131]->(editorName:E82)
+		const q = `
+		MATCH (editor:E21:${prj}-[:P131]->(editorName:E82)
   			WHERE editor.content IN {editors}
   		WITH collect({editor: editor, editorName: editorName}) AS editorsColl
-		MATCH (ttask:E55:`+prj+` {content: "task"}),
-     		(tdesc:E55:`+prj+` {content: "taskDesc"}),
-      		(user:E21:`+prj+` {content: {user}})-[:P131]->(userName:E82),
-      		(parent:E7:`+prj+` {content: {parentId}}),
-      		(tprior:E55:`+prj+` {content: {priority}})-[:P127]->(:E55 {content: "taskPriority"}),
-      		(tstatus:E55:`+prj+` {content: "status_todo"})-[:P127]->(:E55 {content: "taskStatus"})
+		MATCH (ttask:E55:${prj} {content: "task"}),
+     		(tdesc:E55:${prj} {content: "taskDesc"}),
+      		(user:E21:${prj} {content: {user}})-[:P131]->(userName:E82),
+      		(parent:E7:${prj} {content: {parentId}}),
+      		(tprior:E55:${prj} {content: {priority}})-[:P127]->(:E55 {content: "taskPriority"}),
+      		(tstatus:E55:${prj} {content: "status_todo"})-[:P127]->(:E55 {content: "taskStatus"})
   			
-		CREATE (task:E7:`+prj+` {content: {taskId}}),
+		CREATE (task:E7:${prj} {content: {taskId}}),
 			(task)-[:P2]->(ttask),
-			(task)-[:P1]->(title:E41:`+prj+` {titleContent}),
-			(task)-[:P3]->(desc:E62:`+prj+` {descContent})-[:P3_1]->(tdesc),
+			(task)-[:P1]->(title:E41:${prj} {titleContent}),
+			(task)-[:P3]->(desc:E62:${prj} {descContent})-[:P3_1]->(tdesc),
 			(parent)-[:P9]->(task),
 			(task)-[:P2]->(tprior),
 			(task)-[:P2]->(tstatus),
-			(task)-[:P4]->(:E52:`+prj+` {content: {timeId}})-[:P81]->(time:E61:`+prj+` {timeContent}),
-			(task)<-[:P94]-(e65:E65:`+prj+` {content: {e65id}}),
+			(task)-[:P4]->(:E52:${prj} {content: {timeId}})-[:P81]->(time:E61:${prj} {timeContent}),
+			(task)<-[:P94]-(e65:E65:${prj} {content: {e65id}}),
 			(e65)-[:P14]->(user),
-			(e65)-[:P4]->(:E52:`+prj+` {content: {e52id}})-[:P82]->(date:E61:`+prj+` {value: {date}})
+			(e65)-[:P4]->(:E52:${prj} {content: {e52id}})-[:P82]->(date:E61:${prj} {value: {date}})
 			
 		WITH task, title, desc, time, parent, ttask, tprior, tstatus, user, userName, date, editorsColl
 		
@@ -147,7 +144,7 @@ module.exports = {
        		collect({id: editors.editor.content, name: editors.editorName.value}) AS editors,
        		{id: user.content, name: userName.value, date: date.value} AS created`;
 
-		var params = {
+		const params = {
 			taskId: id,
 			titleContent: {
 				content: 'e41_' + id,
@@ -181,21 +178,11 @@ module.exports = {
 	},
 
 	update: function (req, res) {
-		var prj = req.params.id;
-		var id = req.params.tid;
-		var mId = shortid.generate();
+		const prj = req.params.prj;
+		const id = req.params.id;
+		const mId = shortid.generate();
 
-		var priority = 'priority_low';
-		if (req.body.priority === 1)
-			priority = 'priority_medium';
-		else if (req.body.priority === 2)
-			priority = 'priority_high';
-
-		var status = 'status_todo';
-		if (req.body.status === 1)
-			status = 'status_done';
-
-		var editors = [];
+		let editors = [];
 		if (Array.isArray(req.body.editors) &&
 			req.body.editors[0]) {
 			if (typeof req.body.editors[0] === 'string')
@@ -206,18 +193,17 @@ module.exports = {
 				});
 		}
 
-		//noinspection JSAnnotator
-		var q = `
-		MATCH (ttp:E55:`+prj+` {content: "taskPriority"})<-[:P127]-(tprior:E55:`+prj+` {value: {priority}}),
-			(tts:E55:`+prj+` {content: "taskStatus"})<-[:P127]-(tstatus:E55:`+prj+` {value: {status}}),
-			(ttd:E55:`+prj+` {content: "taskDesc"})
+		const q = `
+		MATCH (ttp:E55:${prj} {content: "taskPriority"})<-[:P127]-(tprior:E55:${prj} {value: {priority}}),
+			(tts:E55:${prj} {content: "taskStatus"})<-[:P127]-(tstatus:E55:${prj} {value: {status}}),
+			(ttd:E55:${prj} {content: "taskDesc"})
 		WITH ttp, tprior, tts, tstatus, ttd
-		OPTIONAL MATCH (editor:E21:`+prj+`)
+		OPTIONAL MATCH (editor:E21:${prj})
   			WHERE editor.content IN {editors}
   		WITH ttp, tprior, tts, tstatus, ttd, collect(editor) AS editorsColl
-		MATCH (mUser:E21:`+prj+` {content: {user}})-[:P131]->(mUserName:E82)
+		MATCH (mUser:E21:${prj} {content: {user}})-[:P131]->(mUserName:E82)
 		WITH ttp, tprior, tts, tstatus, ttd, mUser, mUserName, editorsColl
-		MATCH (task:E7:`+prj+` {content: {taskId}})-[:P2]->(ttask:E55 {content: "task"}),
+		MATCH (task:E7:${prj} {content: {taskId}})-[:P2]->(ttask:E55 {content: "task"}),
 			(task)-[:P1]->(title:E41),
     		(task)-[:P3]->(desc:E62)-[:P3_1]->(ttd),
       		(task)-[:P4]->(:E52)-[:P81]->(time:E61),
@@ -241,9 +227,9 @@ module.exports = {
   				
       	CREATE (task)-[:P2]->(tprior),
       		(task)-[:P2]->(tstatus),
-      		(task)<-[:P31]-(e11:E11:`+prj+` {content: {e11id}}),
+      		(task)<-[:P31]-(e11:E11:${prj} {content: {e11id}}),
 			(e11)-[:P14]->(mUser),
-			(e11)-[:P4]->(:E52:`+prj+` {content: {e52id}})-[:P82]->(mDate:E61:`+prj+` {value: {mDate}})
+			(e11)-[:P4]->(:E52:${prj} {content: {e52id}})-[:P82]->(mDate:E61:${prj} {value: {mDate}})
 		SET title.value = {title},
       		desc.value = {desc},
       		time.value = {from},
@@ -275,7 +261,7 @@ module.exports = {
        		created,
        		modified`;
 
-		var params = {
+		const params = {
 			taskId: id,
 			title: req.body.title,
 			desc: req.body.description,
@@ -303,13 +289,12 @@ module.exports = {
 	},
 
 	delete: function (req, res) {
-		var prj = req.params.id;
+		const prj = req.params.prj;
 
 		// TODO: delete comments
 
-		// noinspection JSAnnotator
-		var q = `
-		MATCH (task:E7:`+prj+` {content: {taskId}})-[:P2]->(:E55 {content: "task"}),
+		const q = `
+		MATCH (task:E7:${prj} {content: {taskId}})-[:P2]->(:E55 {content: "task"}),
 			(task)-[:P1]->(title:E41),
 			(task)-[:P3]->(desc:E62)-[:P3_1]->(:E55 {content: "taskDesc"}),
 			(task)-[:P4]->(taske52:E52)-[:P81]->(time:E61),
@@ -328,13 +313,13 @@ module.exports = {
 			CREATE (parent)-[:P9]->(c)
 		)`;
 
-		var params = {
-			taskId: req.params.tid
+		const params = {
+			taskId: req.params.id
 		};
 
 		neo4j.writeTransaction(q, params)
 			.then(function () {
-				res.json({ message: 'Task with ID ' + req.params.tid + ' deleted' });
+				res.json({ message: 'Task with ID ' + req.params.id + ' deleted' });
 			})
 			.catch(function (err) {
 				utils.error.neo4j(res, err, '#task.delete');

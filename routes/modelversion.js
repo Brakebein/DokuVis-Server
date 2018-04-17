@@ -8,10 +8,9 @@ const fs = require('fs-extra-promise');
 module.exports = {
 
 	query: function (req, res) {
-		var prj = req.params.prj;
+		const prj = req.params.prj;
 
-		// noinspection JSAnnotator
-		var q = `MATCH (:E7:`+prj+` {content: $subprj})-[:P15]->(devent:D7),
+		const q = `MATCH (:E7:${prj} {content: $subprj})-[:P15]->(devent:D7),
 				(devent)-[:P1]->(summary:E41),
 				(devent)-[:P3]->(note:E62),
 				(devent)-[:P14]->(user:E21)-[:P131]->(userName:E82),
@@ -37,7 +36,7 @@ module.exports = {
 				software
 			ORDER BY date.value`;
 
-		var params = {
+		const params = {
 			subprj: req.params.subprj
 		};
 
@@ -51,10 +50,9 @@ module.exports = {
 	},
 
 	get: function (req, res) {
-		var prj = req.params.prj;
+		const prj = req.params.prj;
 
-		// noinspection JSAnnotator
-		var q = `MATCH (:E7:`+prj+` {content: $subprj})-[:P15]->(devent:D7 {content: $deventId}),
+		const q = `MATCH (:E7:${prj} {content: $subprj})-[:P15]->(devent:D7 {content: $deventId}),
 				(devent)-[:P1]->(summary:E41),
 				(devent)-[:P3]->(note:E62),
 				(devent)-[:P14]->(user:E21)-[:P131]->(userName:E82),
@@ -78,7 +76,7 @@ module.exports = {
 				successor,
 				software`;
 
-		var params = {
+		const params = {
 			subprj: req.params.subprj,
 			deventId: req.params.id
 		};
@@ -93,12 +91,11 @@ module.exports = {
 	},
 
 	update: function (req, res) {
-		var prj = req.params.prj;
-		var mId = shortid.generate();
+		const prj = req.params.prj;
+		const mId = shortid.generate();
 
-		// noinspection JSAnnotator
-		var q = `MATCH (mUser:E21:`+prj+` {content: $user})-[:P131]->(mUserName:E82)
-			MATCH (devent:D7:`+prj+` {content: $deventId}),
+		const q = `MATCH (mUser:E21:${prj} {content: $user})-[:P131]->(mUserName:E82)
+			MATCH (devent:D7:${prj} {content: $deventId}),
 				(devent)-[:P1]->(summary:E41),
 				(devent)-[:P3]->(note:E62)
 			OPTIONAL MATCH (devent)-[rSw:L23]->(:D14)
@@ -108,7 +105,7 @@ module.exports = {
 			
 			WITH DISTINCT devent, summary, note, mUser, mUserName
 				
-			MERGE (devent)<-[:P31]-(me11:E11:`+prj+`)-[:P4]->(me52:E52:`+prj+`)-[:P82]->(mDate:E61:`+prj+`)
+			MERGE (devent)<-[:P31]-(me11:E11:${prj})-[:P4]->(me52:E52:${prj})-[:P82]->(mDate:E61:${prj})
 				ON CREATE SET me11.content = $me11, me52.content = $me52, mDate.value = $mDate
 				ON MATCH SET mDate.value = $mDate
 			CREATE (me11)-[:P14]->(mUser)
@@ -119,7 +116,7 @@ module.exports = {
 			WITH devent, summary, note, mUser, mUserName, mDate
 			
 			FOREACH (sw IN $software | 
-				MERGE (software:D14:`+prj+` {value: sw.value})
+				MERGE (software:D14:${prj} {value: sw.value})
 					ON CREATE SET software.content = sw.content
 				CREATE (devent)-[:L23]->(software)
 			)
@@ -130,7 +127,7 @@ module.exports = {
 				{id: mUser.content, name: mUserName.value, date: mDate.value} AS modified,
 				extract(sw IN $software | sw.value) AS software`;
 
-		var params = {
+		const params = {
 			user: req.headers['x-key'],
 			deventId: req.params.id,
 			summary: req.body.summary,
@@ -160,13 +157,13 @@ module.exports = {
 	},
 
 	delete: function (req, res) {
-		var prj = req.params.prj;
+		const prj = req.params.prj;
 
 		// TODO: consider comments
+		// TODO: CALL apoc.do.when
 
-		// noinspection JSAnnotator
-		var q = `
-			MATCH (devent:D7:`+prj+` {content: $deventId}),
+		const q = `
+			MATCH (devent:D7:${prj} {content: $deventId}),
 				(devent)-[:P1]->(summary:E41),
 				(devent)-[:P3]->(note:E62),
 				(devent)-[rUser:P14]->(:E21),
@@ -187,11 +184,11 @@ module.exports = {
 			
 			RETURN path`;
 
-		var params = {
+		const params = {
 			deventId: req.params.id
 		};
 
-		var path = config.path.data + '/';
+		let path = config.path.data + '/';
 
 		neo4j.writeTransaction(q, params)
 			.catch(function (err) {

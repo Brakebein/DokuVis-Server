@@ -5,14 +5,14 @@ const neo4j = require('../modules/neo4j-request');
 module.exports = {
 
 	query: function (req, res) {
-		var prj = req.params.prj;
+		const prj = req.params.prj;
 		
-		var q = 'MATCH (e78:E78:'+prj+')-[:P1]-(e41:E41), \
-				(e78)-[:P52]->(e40:E40)-[:P131]->(e82:E82) \
-			OPTIONAL MATCH (e78)-[:P46]->(carriers)\
-			RETURN  { id: e78.content, name: e41.value, nodeId: id(e78) } AS collection,\
-					{ id: e40.content, name: e82.value, abbr: e82.abbr } AS institution,\
-					{ documents: count(carriers) } AS linkStats';
+		const q = `MATCH (e78:E78:${prj})-[:P1]-(e41:E41),
+				(e78)-[:P52]->(e40:E40)-[:P131]->(e82:E82)
+			OPTIONAL MATCH (e78)-[:P46]->(carriers)
+			RETURN  { id: e78.content, name: e41.value, nodeId: id(e78) } AS collection,
+					{ id: e40.content, name: e82.value, abbr: e82.abbr } AS institution,
+					{ documents: count(carriers) } AS linkStats`;
 
 		neo4j.readTransaction(q)
 			.then(function(results) {
@@ -24,16 +24,16 @@ module.exports = {
 	},
 
 	get: function (req, res) {
-		var prj = req.params.prj;
+		const prj = req.params.prj;
 
-		var q = 'MATCH (e78:E78:'+prj+' {content: $id})-[:P1]-(e41:E41), \
-				(e78)-[:P52]->(e40:E40)-[:P131]->(e82:E82) \
-			OPTIONAL MATCH (e78)-[:P46]->(carriers)\
-			RETURN  { id: e78.content, name: e41.value, nodeId: id(e78) } AS collection,\
-					{ id: e40.content, name: e82.value, abbr: e82.abbr } AS institution,\
-					{ documents: count(carriers) } AS linkStats';
+		const q = `MATCH (e78:E78:${prj} {content: $id})-[:P1]-(e41:E41),
+				(e78)-[:P52]->(e40:E40)-[:P131]->(e82:E82)
+			OPTIONAL MATCH (e78)-[:P46]->(carriers)
+			RETURN  { id: e78.content, name: e41.value, nodeId: id(e78) } AS collection,
+					{ id: e40.content, name: e82.value, abbr: e82.abbr } AS institution,
+					{ documents: count(carriers) } AS linkStats`;
 
-		var params = {
+		const params = {
 			id: req.params.id
 		};
 
@@ -49,18 +49,18 @@ module.exports = {
 	create: function (req, res) {
 		if (!req.body.collection || !req.body.institution) { utils.abort.missingData(res, 'body.collection|body.institution'); return; }
 		
-		var prj = req.params.prj;
-		var tid = shortid.generate();
+		const prj = req.params.prj;
+		const tid = shortid.generate();
 
-		var q = 'MERGE (e40:E40:'+prj+')-[:P131]->(e82:E82:'+prj+' {value: $e82value}) \
-				ON CREATE SET e40.content = $e40id, e82.content = $e82id, e82.abbr = $e82abbr \
-			MERGE (e40)<-[:P52]-(e78:E78:'+prj+')-[:P1]->(e41:E41:'+prj+' {value: $e41value}) \
-				ON CREATE SET e78.content = $e78id, e41.content = $e41id \
-			RETURN  { id: e78.content, name: e41.value, nodeId: id(e78) } AS collection,\
-					{ id: e40.content, name: e82.value, abbr: e82.abbr } AS institution,\
-					{ documents: 0 } AS linkStats';
+		const q = `MERGE (e40:E40:${prj})-[:P131]->(e82:E82:${prj} {value: $e82value})
+				ON CREATE SET e40.content = $e40id, e82.content = $e82id, e82.abbr = $e82abbr
+			MERGE (e40)<-[:P52]-(e78:E78:${prj})-[:P1]->(e41:E41:${prj} {value: $e41value})
+				ON CREATE SET e78.content = $e78id, e41.content = $e41id
+			RETURN  { id: e78.content, name: e41.value, nodeId: id(e78) } AS collection,
+					{ id: e40.content, name: e82.value, abbr: e82.abbr } AS institution,
+					{ documents: 0 } AS linkStats`;
 
-		var params = {
+		const params = {
 			e82id: 'e82_' + tid + '_' + utils.replace(req.body.institution),
 			e82value: req.body.institution,
 			e82abbr: req.body.abbr,
@@ -85,19 +85,19 @@ module.exports = {
 	},
 
 	update: function (req, res) {
-		var prj = req.params.prj;
+		const prj = req.params.prj;
 
-		var q = 'MATCH (e78:E78:'+prj+' {content: $id})-[:P1]-(e41:E41), \
-				(e78)-[:P52]->(e40:E40)-[:P131]->(e82:E82)\
-			OPTIONAL MATCH (e78)-[:P46]->(carriers) \
-			SET e41.value = $collection,\
-				e82.value = $institution, \
-				e82.abbr = $abbr \
-			RETURN  { id: e78.content, name: e41.value, nodeId: id(e78) } AS collection,\
-					{ id: e40.content, name: e82.value, abbr: e82.abbr } AS institution,\
-					{ documents: count(carriers) } AS linkStats';
+		const q = `MATCH (e78:E78:${prj} {content: $id})-[:P1]-(e41:E41),
+				(e78)-[:P52]->(e40:E40)-[:P131]->(e82:E82)
+			OPTIONAL MATCH (e78)-[:P46]->(carriers)
+			SET e41.value = $collection,
+				e82.value = $institution,
+				e82.abbr = $abbr
+			RETURN  { id: e78.content, name: e41.value, nodeId: id(e78) } AS collection,
+					{ id: e40.content, name: e82.value, abbr: e82.abbr } AS institution,
+					{ documents: count(carriers) } AS linkStats`;
 
-		var params = {
+		const params = {
 			id: req.params.id,
 			collection: req.body.collection.name,
 			institution: req.body.institution.name,
@@ -114,19 +114,19 @@ module.exports = {
 	},
 
 	delete: function (req, res) {
-		var prj = req.params.prj;
+		const prj = req.params.prj;
 
 		// delete collection
 		// delete institution only, if there are no other collections attached to
-		var q = 'MATCH (e78:E78:'+prj+' {content: $id})-[:P1]-(e41:E41), \
-				(e78)-[:P52]->(e40:E40)-[:P131]->(e82:E82) \
-			OPTIONAL MATCH	(e40)<-[r:P52]-(:E78) \
-			WITH e78, e41,\
-				 CASE WHEN count(r) < 2 THEN e40 ELSE NULL END AS e40,\
-				 CASE WHEN count(r) < 2 THEN e82 ELSE NULL END AS e82 \
-			DETACH DELETE e78, e41, e40, e82';
+		const q = `MATCH (e78:E78:${prj} {content: $id})-[:P1]-(e41:E41),
+				(e78)-[:P52]->(e40:E40)-[:P131]->(e82:E82)
+			OPTIONAL MATCH	(e40)<-[rel:P52]-(:E78)
+			DETACH DELETE e78, e41
+			WITH e40, e82, count(rel) AS relAmount
+			CALL apoc.do.when(relAmount < 2, 'DETACH DELETE e40, e82', '', {e40: e40, e82: e82}) YIELD value
+			RETURN value`;
 
-		var params = {
+		const params = {
 			id: req.params.id
 		};
 

@@ -6,7 +6,7 @@ const router = express.Router();
 
 // multer
 const multer = require('multer');
-var storage = multer.diskStorage({
+const storage = multer.diskStorage({
 	destination: function (req, file, cb) {
 		cb(null, config.path.tmp);
 	},
@@ -19,7 +19,7 @@ var storage = multer.diskStorage({
 			cb(null, file.fieldname + '-' + shortid.generate());
 	}
 });
-var mUpload = multer({ storage: storage });
+const mUpload = multer({ storage: storage });
 
 const can = require('../middlewares/checkPermission');
 
@@ -40,17 +40,17 @@ router.get('/auth/check', auth.checkJWT);
 // project
 const project = require('./project');
 router.get('/auth/project', project.query);
-router.get('/auth/project/:id', project.get);
+router.get('/auth/project/:prj', project.get);
 router.post('/auth/project', project.create);
-router.put('/auth/project/:id', project.update);
-router.delete('/auth/project/:id', can('superadmin'), project.delete);
+router.put('/auth/project/:prj', can('superadmin'), project.update);
+router.delete('/auth/project/:prj', can('superadmin'), project.delete);
 
 // subproject
 const subproject = require('./subproject');
-router.get('/auth/project/:id/subproject', subproject.query);
-router.post('/auth/project/:id/subproject', subproject.create);
-router.get('/auth/project/:id/subproject/:subId', subproject.get);
-router.put('/auth/project/:id/subproject/:subId', subproject.update);
+router.get('/auth/project/:prj/subproject', subproject.query);
+router.post('/auth/project/:prj/subproject', subproject.create);
+router.get('/auth/project/:prj/subproject/:id', subproject.get);
+router.put('/auth/project/:prj/subproject/:id', subproject.update);
 
 // project infos
 const projinfo = require('./projinfo');
@@ -139,25 +139,25 @@ router.delete('/auth/project/:prj/archive/:id', archive.delete);
 
 // staff
 const staff = require('./staff');
-router.get('/auth/project/:id/staff', staff.query);
-router.get('/auth/project/:id/staff/:userId', staff.get);
-router.post('/auth/project/:id/staff', can('admin'), staff.create);
+router.get('/auth/project/:prj/staff', staff.query);
+router.get('/auth/project/:prj/staff/:id', staff.get);
+router.post('/auth/project/:prj/staff', can('admin'), staff.create);
 router.get('/roles', staff.queryRoles);
 
 //tasks
 const task = require('./task');
-router.get('/auth/project/:id/task', task.query);
-router.post('/auth/project/:id/task', task.create);
-router.get('/auth/project/:id/task/:tid', task.get);
-router.put('/auth/project/:id/task/:tid', task.update);
-router.delete('/auth/project/:id/task/:tid', task.delete);
+router.get('/auth/project/:prj/task', task.query);
+router.post('/auth/project/:prj/task', task.create);
+router.get('/auth/project/:prj/task/:id', task.get);
+router.put('/auth/project/:prj/task/:id', task.update);
+router.delete('/auth/project/:prj/task/:id', task.delete);
 
 // activities
 const activity = require('./activity');
 router.get('/auth/project/:prj/:subprj/activity', activity.query);
 
 const typeahead = require('./typeahead');
-router.get('/auth/project/:id/typeahead/:label/:prop/:from', typeahead.query);
-router.get('/auth/project/:id/typeahead/tag', typeahead.queryTags);
+router.get('/auth/project/:prj/typeahead/:label/:prop/:from', typeahead.query);
+router.get('/auth/project/:prj/typeahead/tag', typeahead.queryTags);
 
 module.exports = router;
