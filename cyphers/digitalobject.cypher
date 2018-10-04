@@ -79,9 +79,9 @@ MATCH (tmodel:E55 {content: 'model'})
 WITH tmodel
 MATCH (:E7 {content: $subprj})-[:P15]->(devent:D7 {content: $deventId}),
       (devent)-[:L11]->(dobj:D1)-[:P1]->(file:E75),
-      (dobj)-[rmat:P2]->(mat:E57),
       (dobj)<-[:P106]-(dglob:D1)-[:P2]->(tmodel),
       (dglob)-[:P67]->(e22:E22)
+OPTIONAL MATCH (dobj)-[rmat:P2]->(mat:E57)
 WITH tmodel, dobj, file, mat
 ORDER BY rmat.order
 WITH tmodel, dobj, file, collect(mat) AS materials
