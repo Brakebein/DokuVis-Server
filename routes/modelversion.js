@@ -160,7 +160,7 @@ module.exports = {
 		const prj = req.params.prj;
 
 		// TODO: consider comments
-		// TODO: CALL apoc.do.when
+		// TODO: CALL apoc.do.when (causing problems -> path is not returned)
 
 		const q = `
 			MATCH (devent:D7:${prj} {content: $deventId}),
@@ -170,9 +170,9 @@ module.exports = {
 				(devent)-[:P4]->(e52:E52)-[:P82]->(date:E61)
 			OPTIONAL MATCH (devent)<-[:P31]-(me11:E11)-[:P4]->(me52:E52)-[:P82]->(mDate:E61)
 			OPTIONAL MATCH (devent)-[:L11]->(dobj)-[:P1]->(file:E75),
-				(dobj)-[:P2]->(mat:E57),
-				(dobj)<-[:P106]-(dglob:D1)-[:P67]->(e22:E22),
-				(dglob)-[rglob:P106]->()
+				(dobj)<-[:P106]-(dglob:D1)-[:P67]->(e22:E22)
+			OPTIONAL MATCH (dobj)-[:P2]->(mat:E57)
+			OPTIONAL MATCH (dglob)-[rglob:P106]->()
 				
 			DETACH DELETE devent, summary, note, e52, date, me11, me52, mDate, dobj, mat
 			
