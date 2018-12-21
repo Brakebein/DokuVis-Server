@@ -1,0 +1,151 @@
+openapi: 3.0.2
+
+info:
+  title: DokuVis-Server API
+  description: API description in Markdown.
+  version: 0.1.4
+
+servers:
+  - url: 'http://dokuvis.org/api'
+
+security:
+  - XAccessToken:
+      - read
+      - write
+  - XKey:
+      - read
+      - write
+
+paths:
+  /login:
+    post:
+      summary: Login user.
+      description: Send user credentials to obtain valid access token.
+      requestBody:
+        description: User credentials.
+        content:
+          application/json:
+            schema:
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                  format: password
+        required: true
+      responses:
+        '200':
+          $ref: responses.yaml#/LoginToken
+        '401':
+          $ref: responses.yaml#/InvalidCredentials
+        '500':
+          $ref: responses.yaml#/GeneralError
+      security: []
+
+  /register:
+    post:
+      summary: Register user.
+      description: Send user credentials to register to the system and obtain valid access token.
+      requestBody:
+        description: User credentials and user name.
+        content:
+          application/json:
+            schema:
+              properties:
+                email:
+                  type: string
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
+        required: true
+      responses:
+        '200':
+          $ref: responses.yaml#/LoginToken
+        '401':
+          $ref: responses.yaml#/InvalidCredentials
+      security: []
+
+  /auth/project:
+    get:
+      summary: Get all projects of the user.
+      responses:
+        '200':
+          description: List of projects.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: schemas.yaml#/Project
+    post:
+      summary: Create a new object
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: schemas.yaml#/Project
+      responses:
+        '200':
+          $ref: responses.yaml#/Project
+
+  /auth/project/{prj}:
+    parameters:
+      - description: Project ID
+        name: prj
+        in: path
+        required: true
+    get:
+      summary: Get project.
+      responses:
+        '200':
+          $ref: responses.yaml#/Project
+    put:
+      summary: Update name or description of project.
+      responses:
+        '200':
+          $ref: responses.yaml#/Project
+        '403':
+          $ref: responses.yaml#/NoPermission
+    delete:
+      summary: Delete project and all its data.
+      responses:
+        '403':
+          $ref: responses.yaml#/NoPermission
+
+  /users:
+    get:
+      summary: Returns a list of users.
+      description: Optional extended description in Markdown.
+      responses:
+        '200':
+          description: OK
+
+components:
+
+  requestBodies:
+    UserCredentials:
+      description: User credentials
+      content:
+        application/json:
+          schema:
+            properties:
+              email:
+                type: string
+              password:
+                type: string
+                format: password
+      required: true
+
+  securitySchemes:
+    XAccessToken:
+      type: apiKey
+      description: Access token obtained on login.
+      name: X-Access-Token
+      in: header
+    XKey:
+      type: apiKey
+      description: User ID (email)
+      name: X-Key
+      in: header
