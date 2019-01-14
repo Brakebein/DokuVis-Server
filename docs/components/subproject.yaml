@@ -1,0 +1,108 @@
+openapi: 3.0.2
+
+# /auth/project/{prj}/subproject
+path:
+  parameters:
+    - $ref: project.yaml#/parameter
+  get:
+    tags: [Subproject]
+    summary: Get all subprojects of the project
+    responses:
+      '200':
+        description: List of subprojects.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/schema'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+  post:
+    tags: [Subproject]
+    summary: Create new subproject
+    requestBody:
+      content:
+        application/json:
+          schema:
+            required:
+              - name
+            properties:
+              name:
+                type: string
+                example: My Subproject
+              description:
+                type: string
+                description: Short description (optional)
+                nullable: true
+                example: My short description
+    responses:
+      '200':
+        $ref: '#/response'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+      '510':
+        $ref: ../responses.yaml#/MissingData
+
+# /auth/project/{prj}/subproject/{subprj}
+pathParam:
+  parameters:
+    - $ref: project.yaml#/parameter
+    - $ref: '#/parameter'
+  get:
+    tags: [Subproject]
+    summary: Get subproject
+    responses:
+      '200':
+        $ref: '#/response'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+  put:
+    tags: [Subproject]
+    summary: Update name or description of subproject
+    requestBody:
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/schema'
+            required:
+              - name
+    responses:
+      '200':
+        $ref: '#/response'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+
+# components
+parameter:
+  description: Subproject ID
+  name: subprj
+  in: path
+  required: true
+
+response:
+  description: Default Subproject response
+  content:
+    application/json:
+      schema:
+        $ref: '#/schema'
+
+schema:
+  description: Subproject details
+  type: object
+  properties:
+    id:
+      type: string
+      description: Subproject ID
+    name:
+      type: string
+      description: Title of the subproject
+    description:
+      type: string
+      description: Short description
+      nullable: true
+  example:
+    id: subSy3ZnU7qX
+    name: 'ZS09: Longuelune'
+    description: 9. Planungszustand nach 1728

@@ -1,7 +1,7 @@
 openapi: 3.0.2
 
 GeneralError:
-  description: General Error. Something went wrong, e.g. MySQL/Neo4j database request.
+  description: General Error. Something went wrong, e.g. MySQL/Neo4j database request, file system failure.
   content:
     application/json:
       schema:
@@ -12,26 +12,13 @@ GeneralError:
             anyOf:
               - type: string
               - type: object
+      examples:
+        Neo4j:
+          summary: Example response, if failure on Neo4j database request.
+          value:
+            message: 'Neo4j failure #projects.query'
+            originalError: Neo4jSyntaxException ...
 
-LoginToken:
-  description: Valid access token.
-  content:
-    application/json:
-      schema:
-        properties:
-          token:
-            type: string
-          expires:
-            type: integer
-          user:
-            type: object
-            properties:
-              email:
-                type: string
-              name:
-                type: string
-              password:
-                type: string
 
 InvalidCredentials:
   description: The user credentials are either missing or invalid.
@@ -44,7 +31,7 @@ InvalidCredentials:
       example:
         summary: Example response for invalid credentials.
         value:
-          message: Invalid credentials #6
+          message: 'Invalid credentials #6'
 
 NoPermission:
   description: The user is not allowed to execute this operation.
@@ -56,10 +43,21 @@ NoPermission:
             type: string
           error:
             type: string
+      example:
+        summary: Example response for operations that are not permitted for the user.
+        value:
+          message: No Permission!
+          error: No Permission <User> <ProjectId> <Method> <OriginalUrl>
 
-Project:
-  description: Project details.
+MissingData:
+  description: At least one of the required content in request body is missing. HTTP status code should actually be __400__ or __422__.
   content:
     application/json:
       schema:
-        $ref: schemas.yaml#/Project
+        properties:
+          message:
+            type: string
+        example:
+          summary: Example response for missing data.
+          value:
+            message: Missing essential data | body.name

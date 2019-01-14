@@ -1,0 +1,149 @@
+openapi: 3.0.2
+
+# /auth/project/{prj}/{subprj}/projinfo
+path:
+  parameters:
+    - $ref: project.yaml#/parameter
+    - $ref: subproject.yaml#/parameter
+  get:
+    tags: [ProjInfo]
+    summary: Get all ProjInfos of subproject
+    responses:
+      '200':
+        description: List of ProjInfos
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/schema'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+  post:
+    tags: [ProjInfo]
+    summary: Create a new ProjInfo
+    requestBody:
+      $ref: '#/requestBody'
+    responses:
+      '200':
+        $ref: '#/response'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+      '510':
+        $ref: ../responses.yaml#/MissingData
+  put:
+    tags: [ProjInfo]
+    summary: Swap order of two ProjInfos
+    requestBody:
+      content:
+        application/json:
+          schema:
+            required:
+              - from
+              - to
+            properties:
+              from:
+                type: string
+                description: ID of the item to swap
+              to:
+                type: string
+                description: ID of the item to swap with
+    responses:
+      '200':
+        description: Notification about successful swap.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: ProjInfo order swapped
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+      '510':
+        $ref: ../responses.yaml#/MissingData
+
+# /auth/project/{prj}/{subprj}/projinfo/{id}
+pathParam:
+  parameters:
+    - $ref: project.yaml#/parameter
+    - $ref: subproject.yaml#/parameter
+    - description: ProjInfo ID
+      name: id
+      in: path
+      required: true
+  get:
+    tags: [ProjInfo]
+    summary: Get ProjInfo
+    responses:
+      '200':
+        $ref: '#/response'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+  put:
+    tags: [ProjInfo]
+    summary: Update ProjInfo
+    requestBody:
+      $ref: '#/requestBody'
+    responses:
+      '200':
+        $ref: '#/response'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+      '510':
+        $ref: ../responses.yaml#/MissingData
+  delete:
+    tags: [ProjInfo]
+    summary: Delete ProjInfo
+    responses:
+      '200':
+        description: Notification about successful deleted ProjInfo.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: ProjInfo deleted
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+
+# components
+requestBody:
+  description: Information content
+  content:
+    application/json:
+      schema:
+        required:
+          - value
+        properties:
+          value:
+            type: string
+            description: Information content (can be HTML string)
+
+response:
+  description: Default ProjInfo response
+  content:
+    application/json:
+      schema:
+        $ref: '#/schema'
+
+schema:
+  description: Piece of information
+  type: object
+  properties:
+    id:
+      type: string
+      description: ProjInfo ID
+    value:
+      type: string
+      description: Content (can be HTML string)
+    order:
+      type: integer
+      description: The order in which the ProjInfos should be displayed.
+  example:
+    id: BkDs3UQqm_subSy3ZnU7qX
+    value: <h3>Architekt</h3><p>Zacharias Longuelune (1669-1748)</p>
+    order: 1

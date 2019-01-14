@@ -1,0 +1,163 @@
+openapi: 3.0.2
+
+# /auth/project
+path:
+  get:
+    tags: [Project]
+    summary: Get all projects of the user
+    responses:
+      '200':
+        description: List of projects.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/schema'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+  post:
+    tags: [Project]
+    summary: Create a new project
+    requestBody:
+      content:
+        application/json:
+          schema:
+            required:
+              - name
+            properties:
+              name:
+                type: string
+                description: Title of the project
+                example: My Project
+              description:
+                type: string
+                description: Short description (optional)
+                nullable: true
+                example: My short description
+    responses:
+      '200':
+        description: Notification about successful creation of the project. Needs to be changed, so response is the same as GET request.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: Project <ProjectId> created
+                status:
+                  type: string
+                  example: SUCCESS
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+      '510':
+        $ref: ../responses.yaml#/MissingData
+
+# /auth/project/{prj}
+pathParam:
+  parameters:
+    - $ref: '#/parameter'
+  get:
+    tags: [Project]
+    summary: Get project
+    responses:
+      '200':
+        $ref: '#/response'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+  put:
+    tags: [Project]
+    summary: Update name or description of project
+    requestBody:
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/schema'
+            required:
+              - name
+    responses:
+      '200':
+        description: Altered project details and debug information. Needs to be changed, so response is the same as GET request.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                affectedRows:
+                  type: integer
+                  example: 1
+                data:
+                  $ref: '#/schema'
+                status:
+                  type: string
+                  example: SUCCESS
+      '403':
+        $ref: ../responses.yaml#/NoPermission
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+      '510':
+        $ref: ../responses.yaml#/MissingData
+  delete:
+    tags: [Project]
+    summary: Delete project and all its data
+    responses:
+      '200':
+        description: Notification about successful deleted project.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: Project <proj> deleted
+                status:
+                  type: string
+                  example: SUCCESS
+      '403':
+        $ref: ../responses.yaml#/NoPermission
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+
+# components
+parameter:
+  description: Project ID
+  name: prj
+  in: path
+  required: true
+
+response:
+  description: Default Project response
+  content:
+    application/json:
+      schema:
+        $ref: '#/schema'
+
+schema:
+  description: Project details
+  type: object
+  properties:
+    pid:
+      type: integer
+      description: ID in MySQL database table
+    proj:
+      type: string
+      description: Project ID (should be renamed to `id`)
+    name:
+      type: string
+      description: Title of the project
+    description:
+      type: string
+      description: Short description
+      nullable: true
+    role:
+      type: string
+      description: User's role on this project
+  example:
+    pid: 1
+    proj: Proj_BJ24xXaAW
+    name: First project
+    description: This is my first project
+    role: superadmin

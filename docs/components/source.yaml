@@ -1,0 +1,407 @@
+openapi: 3.0.2
+
+# /auth/project/{prj}/{subprj}/source
+path:
+  parameters:
+    - $ref: project.yaml#/parameter
+    - $ref: subproject.yaml#/parameter
+  get:
+    tags: [Source]
+    summary: Get all sources of subproject
+    responses:
+      '200':
+        description: List of sources.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/schemas/default'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+  post:
+    tags: [Source]
+    summary: Upload new source
+    requestBody:
+      content:
+        multipart/form-data:
+          schema:
+            $ref: '#/schemas/upload'
+      required: true
+    responses:
+      '200':
+        $ref: '#/response'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+      '510':
+        $ref: ../responses.yaml#/MissingData
+
+# /auth/project/{prj}/{subprj}/source/{id}
+pathParam:
+  parameters:
+    - $ref: project.yaml#/parameter
+    - $ref: subproject.yaml#/parameter
+    - $ref: '#/parameter'
+  get:
+    tags: [Source]
+    summary: Get source
+    responses:
+      '200':
+        $ref: '#/response'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+  put:
+    tags: [Source]
+    summary: Update source metadata
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: '#/schemas/default'
+    responses:
+      '200':
+        $ref: '#/response'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+  delete:
+    tags: [Source]
+    summary: Delete source
+    responses:
+      '200':
+        description: Notification about successful deleted source.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: Source with ID <id> deleted
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+
+# /auth/project/{prj}/{subprj}/source/{id}/file
+pathFileUpdate:
+  parameters:
+    - $ref: project.yaml#/parameter
+    - $ref: subproject.yaml#/parameter
+    - $ref: '#/parameter'
+  post:
+    tags: [Source]
+    summary: Update source file
+    requestBody:
+      content:
+        multipart/form-data:
+          schema:
+            required:
+              - updateSourceFile
+              - date
+            properties:
+              updateSourceFile:
+                description: Uploaded file
+                type: string
+                format: binary
+              date:
+                description: Date-time of the upload
+                type: string
+                format: 'date-time'
+    responses:
+      '200':
+        description: Updated file properties.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                file:
+                  $ref: '#/schemas/file'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+
+# /auth/project/{prj}/{subprj}/source/{id}/spatial
+pathSpatial:
+  parameters:
+    - $ref: project.yaml#/parameter
+    - $ref: subproject.yaml#/parameter
+    - $ref: '#/parameter'
+  post:
+    tags: [Source]
+    summary: Spatialize image
+    description: |
+      Save spatial data either by using the manual approach (sending matrix, offset, ck), or sending corresponding points in 2D image and 3D scene and process by DLT (Direct Linear Transformation).
+
+      This operation needs to be revised and updated.
+    parameters:
+      - description: Spatialization method
+        name: method
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [manual, DLT]
+    requestBody:
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/schemas/default'
+              - type: object
+                oneOf:
+                  - type: object
+                    properties:
+                      spatialize:
+                        $ref: '#/schemas/spatial'
+                  - type: object
+                    properties:
+                      dlt:
+                        type: string
+                        description: JSON string of DLT properties
+    responses:
+      '200':
+        $ref: '#/response'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+
+# components
+parameter:
+  description: Source ID
+  name: id
+  in: path
+  required: true
+
+response:
+  description: Default Source response
+  content:
+    application/json:
+      schema:
+        $ref: '#/schemas/default'
+
+schemas:
+  default:
+    description: Source metadata
+    type: object
+    properties:
+      id:
+        description: Source ID
+        type: string
+      archive:
+        description: Archive, from which the source is retrieved
+        type: object
+        properties:
+          identifier:
+            description: Identification number of the source within the archive
+            type: string
+            nullable: true
+            example: M 8 III Bl. ?
+          collection:
+            description: Name of the collection
+            type: string
+            nullable: true
+            example: Plansammlung
+          institution:
+            description: Name of the institution
+            type: string
+            nullable: true
+            example: Landesamt für Denkmalpflege Sachsen, Dresden
+          institutionAbbr:
+            description: Abbreviation of the institution
+            type: string
+            nullable: true
+            example: LfDS
+      author:
+        description: Name of the author
+        type: string
+        nullable: true
+        example: Zacharias Longuelune
+      created:
+        description: Information about who uploaded the source
+        type: object
+        properties:
+          id:
+            description: User ID
+            type: string
+            example: user@domain.com
+          name:
+            description: User name
+            type: string
+            example: Nickname
+          date:
+            description: Upload date
+            type: string
+            format: 'date-time'
+            example: 2018-10-05T13:00:01+02:00
+      commentLength:
+        description: Amount of comments on this source
+        type: integer
+        minimum: 0
+      date:
+        description: Date at which the source has been created
+        type: string
+        nullable: true
+        example: '1786'
+      file:
+        $ref: '#/schemas/file'
+      modified:
+        description: Information about who modified the source
+        type: object
+        properties:
+          id:
+            description: User ID
+            type: string
+            nullable: true
+          name:
+            description: User name
+            type: string
+            nullable: true
+          date:
+            description: Modification date
+            type: string
+            nullable: true
+      note:
+        description: Additional information
+        type: string
+        nullable: true
+        example: lavierte Risszeichnung
+      place:
+        description: Place at which the source has been created
+        type: string
+        nullable: true
+        example: Dresden
+      primary:
+        description: Whether the source is a primary source or not
+        type: boolean
+      repros:
+        description: Repros
+        type: string
+        nullable: true
+        example: Franz 1953, Abb. 5
+      spatial:
+        $ref: '#/schemas/spatial'
+      tags:
+        description: Associated tags
+        type: array
+        items:
+          type: string
+        example: [aufriss, hof, querschnitt]
+      title:
+        description: Source title
+        type: string
+        example: Querschnitt des Ehrenhofes
+      type:
+        description: Source type
+        type: string
+        enum: [picture, plan, text]
+        example: plan
+
+  upload:
+    required:
+      - sourceType
+      - date
+      - title
+      - uploadSourceFile
+    properties:
+      sourceType:
+        description: Source type
+        type: string
+        enum: [picture, plan, text]
+        example: picture
+      date:
+        description: Date-time of the upload
+        type: string
+        format: 'date-time'
+        example: 2019-01-14T10:25:20+01:00
+      title:
+        description: Source title
+        type: string
+      uploadSourceFile:
+        description: Uploaded file
+        type: string
+        format: binary
+      author:
+        description: Name of the author
+        type: string
+      creationDate:
+        description: Date at which the source has been created
+        type: string
+      creationPlace:
+        description: Date at which the source has been created
+        type: string
+      repros:
+        description: Repros
+        type: string
+      note:
+        description: Additional information
+        type: string
+      archive:
+        description: (Internal) ID of collection
+        type: string
+      archiveNr:
+        description: Identification number of the source within the archive
+        type: string
+      primary:
+        description: Whether the source is a primary source or not
+        type: boolean
+      tags:
+        description: Associated tags
+        type: array
+        items:
+          type: string
+
+  file:
+    type: object
+    properties:
+      content:
+        description: Filename
+        type: string
+      path:
+        description: Path to the file
+        type: string
+      original:
+        description: Original filename
+        type: string
+      preview:
+        description: File for preview (resized to max. 1024px)
+        type: string
+      texture:
+        description: File with resolution to nearest power of 2
+        type: string
+      texturePreview:
+        description: Small sized texture
+        type: string
+      thumb:
+        description: Thumbnail image
+        type: string
+      type:
+        description: File type
+        type: string
+        example: jpg
+      width:
+        description: Width in pixel
+        type: integer
+      height:
+        description: Height in pixel
+        type: integer
+
+  spatial:
+    description: Spatial information
+    type: object
+    nullable: true
+    properties:
+      matrix:
+        type: array
+        items:
+          type: number
+          format: float
+        minItems: 16
+        maxItems: 16
+      offset:
+        type: array
+        items:
+          type: number
+          format: float
+        minItems: 2
+        maxItems: 2
+      ck:
+        type: number
+        format: float
+

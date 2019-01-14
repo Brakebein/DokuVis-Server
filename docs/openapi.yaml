@@ -1,150 +1,110 @@
 openapi: 3.0.2
 
 info:
-  title: DokuVis-Server API
-  description: API description in Markdown.
   version: 0.1.4
+  title: DokuVis-Server API
+  x-logo:
+    url: 'logo_api.png'
+    backgroundColor: '#555555'
+    altText: DokuVis API Endpoint
+  description: |
+    API description in Markdown.
+
+    This documentation of DokuVis-Server API is not yet complete.
+
+    ### API Improvements
+
+    * **510** status code incorrectly used. In case of missing data in request body, server should return status code **400** or **422**.
+    * Only one authentication header should be required.
+    * ...
+
+    # Authentication
+
+    Both authentication headers are required together. So they need to be set for almost all requests. In future, this should be reduced to only one header.
+
+    <security-definitions />
 
 servers:
   - url: 'http://dokuvis.org/api'
 
 security:
-  - XAccessToken:
+  - X-Access-Token:
       - read
       - write
-  - XKey:
+  - X-Key:
       - read
       - write
+
+tags:
+  - name: Login/Register
+    description: Login and register operations.
+  - name: Project
+    description: Project related operations.
+  - name: ProjInfo
+    description: Information pieces to add more contextual information to the project/subproject.
+  - name: Source
+    description: Sources like plans, images, texts, etc.
+
+x-tagGroups:
+  - name: User Management
+    tags:
+      - Login/Register
+  - name: Project
+    tags:
+      - Project
+      - Subproject
+      - ProjInfo
+  - name: Content
+    tags:
+      - Source
 
 paths:
+  # Auth
   /login:
-    post:
-      summary: Login user.
-      description: Send user credentials to obtain valid access token.
-      requestBody:
-        description: User credentials.
-        content:
-          application/json:
-            schema:
-              properties:
-                email:
-                  type: string
-                password:
-                  type: string
-                  format: password
-        required: true
-      responses:
-        '200':
-          $ref: responses.yaml#/LoginToken
-        '401':
-          $ref: responses.yaml#/InvalidCredentials
-        '500':
-          $ref: responses.yaml#/GeneralError
-      security: []
+    $ref: components/auth.yaml#/pathLogin
 
   /register:
-    post:
-      summary: Register user.
-      description: Send user credentials to register to the system and obtain valid access token.
-      requestBody:
-        description: User credentials and user name.
-        content:
-          application/json:
-            schema:
-              properties:
-                email:
-                  type: string
-                username:
-                  type: string
-                password:
-                  type: string
-                  format: password
-        required: true
-      responses:
-        '200':
-          $ref: responses.yaml#/LoginToken
-        '401':
-          $ref: responses.yaml#/InvalidCredentials
-      security: []
+    $ref: components/auth.yaml#/pathRegister
 
+  # Project
   /auth/project:
-    get:
-      summary: Get all projects of the user.
-      responses:
-        '200':
-          description: List of projects.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: schemas.yaml#/Project
-    post:
-      summary: Create a new object
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: schemas.yaml#/Project
-      responses:
-        '200':
-          $ref: responses.yaml#/Project
+    $ref: components/project.yaml#/path
 
   /auth/project/{prj}:
-    parameters:
-      - description: Project ID
-        name: prj
-        in: path
-        required: true
-    get:
-      summary: Get project.
-      responses:
-        '200':
-          $ref: responses.yaml#/Project
-    put:
-      summary: Update name or description of project.
-      responses:
-        '200':
-          $ref: responses.yaml#/Project
-        '403':
-          $ref: responses.yaml#/NoPermission
-    delete:
-      summary: Delete project and all its data.
-      responses:
-        '403':
-          $ref: responses.yaml#/NoPermission
+    $ref: components/project.yaml#/pathParam
 
-  /users:
-    get:
-      summary: Returns a list of users.
-      description: Optional extended description in Markdown.
-      responses:
-        '200':
-          description: OK
+  # Subproject
+  /auth/project/{prj}/subproject:
+    $ref: components/subproject.yaml#/path
+
+  /auth/project/{prj}/subproject/{subprj}:
+    $ref: components/subproject.yaml#/pathParam
+
+  # ProjInfo
+  /auth/project/{prj}/{subprj}/projinfo:
+    $ref: components/projinfo.yaml#/path
+
+  /auth/project/{prj}/{subprj}/projinfo/{id}:
+    $ref: components/projinfo.yaml#/pathParam
+
+  # Source
+  /auth/project/{prj}/{subprj}/source:
+    $ref: components/source.yaml#/path
+  /auth/project/{prj}/{subprj}/source/{id}:
+    $ref: components/source.yaml#/pathParam
+  /auth/project/{prj}/{subprj}/source/{id}/file:
+    $ref: components/source.yaml#/pathFileUpdate
+  /auth/project/{prj}/{subprj}/source/{id}/spatial:
+    $ref: components/source.yaml#/pathSpatial
 
 components:
-
-  requestBodies:
-    UserCredentials:
-      description: User credentials
-      content:
-        application/json:
-          schema:
-            properties:
-              email:
-                type: string
-              password:
-                type: string
-                format: password
-      required: true
-
   securitySchemes:
-    XAccessToken:
+    X-Access-Token:
       type: apiKey
       description: Access token obtained on login.
       name: X-Access-Token
       in: header
-    XKey:
+    X-Key:
       type: apiKey
       description: User ID (email)
       name: X-Key
