@@ -1,0 +1,87 @@
+openapi: 3.0.2
+
+# /login
+pathLogin:
+  post:
+    tags: [Login/Register]
+    summary: Login user
+    description: Send user credentials to obtain valid access token.
+    requestBody:
+      description: User credentials.
+      content:
+        application/json:
+          schema:
+            required:
+              - email
+              - password
+            properties:
+              email:
+                type: string
+                format: email
+                example: user@domain.com
+              password:
+                type: string
+                format: password
+    responses:
+      '200':
+        $ref: '#/responses/LoginToken'
+      '401':
+        $ref: ../responses.yaml#/InvalidCredentials
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+    security: []
+
+# /register
+pathRegister:
+  post:
+    tags: [Login/Register]
+    summary: Register user
+    description: Send user credentials to register to the system and obtain valid access token.
+    requestBody:
+      description: User credentials and user name.
+      content:
+        application/json:
+          schema:
+            required:
+              - email
+              - username
+              - password
+            properties:
+              email:
+                type: string
+                format: email
+                example: user@domain.com
+              username:
+                type: string
+                example: Nickname
+              password:
+                type: string
+                format: password
+    responses:
+      '200':
+        $ref: '#/responses/LoginToken'
+      '401':
+        $ref: ../responses.yaml#/InvalidCredentials
+    security: []
+
+responses:
+  LoginToken:
+    description: Valid access token.
+    content:
+      application/json:
+        schema:
+          properties:
+            token:
+              type: string
+            expires:
+              type: integer
+            user:
+              type: object
+              properties:
+                email:
+                  type: string
+                name:
+                  type: string
+                password:
+                  type: string
+                  description: Password should not be part of the response. Needs to be changed!
