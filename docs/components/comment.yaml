@@ -1,0 +1,247 @@
+openapi: 3.0.2
+
+# /auth/project/:prj/:subprj/comment
+path:
+  parameters:
+    - $ref: project.yaml#/parameter
+    - $ref: subproject.yaml#/parameter
+  get:
+    tags: [Comment]
+    summary: Get all comments in this subproject
+    responses:
+      '200':
+        description: List of comments.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/schemas/default'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+  post:
+    tags: [Comment]
+    summary: Create a new comment
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              type:
+                description: Type of the comment
+                type: string
+                enum: [model, source, answer, task]
+              text:
+                description: Actual comment
+                type: string
+              targets:
+                oneOf:
+                  - type: string
+                  - type: array
+                    items:
+                      type: string
+              refs:
+                type: array
+                items:
+                  type: string
+              screenshots:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    sData:
+                      type: string
+                      format: byte
+                    pData:
+                      type: string
+                      format: byte
+              date:
+                type: string
+                format: 'date-time'
+    responses:
+      '200':
+        description: Minimal comment data.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                value:
+                  type: string
+                type:
+                  type: string
+                targets:
+                  type: array
+                  items:
+                    type: string
+                refs:
+                  type: array
+                  items:
+                    type: string
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+      '510':
+        $ref: ../responses.yaml#/MissingData
+
+
+# /auth/project/:prj/:subprj/comment/{id}
+pathParam:
+  parameters:
+    - $ref: project.yaml#/parameter
+    - $ref: subproject.yaml#/parameter
+    - $ref: '#/parameter'
+  get:
+    tags: [Comment]
+    summary: Get comment
+    responses:
+      '200':
+        description: Comment data.
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/default'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+
+# components
+parameter:
+  description: Comment ID
+  name: id
+  in: path
+  required: true
+
+schemas:
+  default:
+    type: object
+    properties:
+      id:
+        description: Comment ID
+        type: string
+      answers:
+        description: List of answer IDs
+        type: array
+        items:
+          description: ID of answer
+          type: string
+      created:
+        description: Information about who created this comment
+        type: object
+        properties:
+          id:
+            description: ID of user
+            type: string
+          name:
+            description: Name of the user
+            type: string
+          date:
+            type: string
+            format: 'date-time'
+      pins:
+        type: array
+        items:
+          description: Information about pin, on where a comment has been attached to an object (applies only to model comment)
+          type: object
+          properties:
+            content:
+              description: ID of the pin
+              type: string
+            pinMatrix:
+              description: Matrix in which translation and rotation is stored
+              type: array
+              items:
+                type: number
+                format: float
+              minItems: 16
+              maxItems: 16
+            screenIndex:
+              type: integer
+            targetId:
+              description: ID of object the pin has been attached to
+              type: string
+      refs:
+        description: List of references this comment is associated with (primarily sources)
+        type: array
+        items:
+          description: ID of reference (source)
+          type: string
+      screenshots:
+        type: array
+        items:
+          description: Information about saved screenshot (applies only to model comment)
+          type: object
+          properties:
+            screenId:
+              description: ID of the screenshot
+              type: string
+            cameraCenter:
+              description: Position of camera pivot point
+              type: array
+              items:
+                type: number
+                format: float
+              minItems: 3
+              maxItems: 3
+            cameraFOV:
+              description: Camera aperture angle
+              type: integer
+            cameraMatrix:
+              description: Important to set user's view to view, where comment has been saved
+              type: array
+              items:
+                type: number
+                format: float
+              minItems: 16
+              maxItems: 16
+            file:
+              description: Image file
+              type: string
+            height:
+              description: Height in pixel
+              type: integer
+            paint:
+              description: Information about user drawing
+              type: object
+              properties:
+                id:
+                  description: ID of paint/drawing
+                  type: string
+                file:
+                  type: string
+                height:
+                  type: integer
+                path:
+                  type: string
+                width:
+                  type: integer
+            path:
+              description: Path to image files
+              type: string
+            thumb:
+              description: Thumbnail file
+              type: string
+            width:
+              description: Width in pixel
+              type: integer
+      targetFile:
+        type: array
+        items:
+          description: Information about with target associated files to display thumbnail of target (primarily used by source comments)
+          type: object
+          anyOf:
+            - $ref: source.yaml#/schemas/file
+      targets:
+        description: List of targets this comment is attached to (either digital objects, sources, or tasks)
+        type: array
+        items:
+          description: ID of object, source, or task
+          type: string
+      type:
+        description: Comment type
+        type: string
+        enum: [commentModel, commentSource, commentAnswer]
+      value:
+        description: Comment text
+        type: string

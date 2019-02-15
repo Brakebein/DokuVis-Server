@@ -1,0 +1,161 @@
+openapi: 3.0.2
+
+# /auth/project/{prj}/arcbive
+path:
+  parameters:
+    - $ref: project.yaml#/parameter
+  get:
+    tags: [Archive]
+    summary: Get all archives in this project
+    responses:
+      '200':
+        description: List of archives.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/schemas/default'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+  post:
+    tags: [Archive]
+    summary: Create new archive entry
+    description: This creates a new collection and institution entry unless there aren't already entries with same names.
+    requestBody:
+      content:
+        application/json:
+          schema:
+            required:
+              - collection
+              - institution
+            properties:
+              collection:
+                $ref: '#/schemas/collectionName'
+              institution:
+                $ref: '#/schemas/institutionName'
+              abbr:
+                $ref: '#/schemas/institutionAbbr'
+    responses:
+      '200':
+        $ref: '#/response'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+      '510':
+        $ref: ../responses.yaml#/MissingData
+
+# /auth/project/{prj}/archive/{id}
+pathParam:
+  parameters:
+    - $ref: project.yaml#/parameter
+    - description: Collection ID
+      name: id
+      in: path
+      required: true
+  get:
+    tags: [Archive]
+    summary: Get archive entry
+    responses:
+      '200':
+        $ref: '#/response'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+  put:
+    tags: [Archive]
+    summary: Update archive entry
+    requestBody:
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/schemas/default'
+              - required:
+                - collection
+                - institution
+                properties:
+                  collection:
+                    required:
+                      - name
+                  institution:
+                    required:
+                      - name
+    responses:
+      '200':
+        $ref: '#/response'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+  delete:
+    tags: [Archive]
+    summary: Delete archive entry
+    description: It will delete the collection entry. It will delete the institution entry only, if there are no other collections attached to it.
+    responses:
+      '200':
+        description: Notification about successful deleted entry.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: Archive with collection ID <id> deleted
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+
+# components
+response:
+  description: Default Archive response
+  content:
+    application/json:
+      schema:
+        $ref: '#/schemas/default'
+
+schemas:
+  default:
+    description: Archive metadata
+    type: object
+    properties:
+      collection:
+        description: Information about the specific collection
+        type: object
+        properties:
+          id:
+            description: Collection ID
+            type: string
+          nodeId:
+            description: Internal Neo4j node ID. (This is actually unneccessary information and should be removed.)
+            type: integer
+          name:
+            $ref: '#/schemas/collectionName'
+      institution:
+        description: Information about the institution the collection belongs to
+        type: object
+        properties:
+          id:
+            description: Institution ID
+            type: string
+          name:
+            $ref: '#/schemas/institutionName'
+          abbr:
+            allOf:
+              - $ref: '#/schemas/institutionAbbr'
+              - nullable: true
+      linkStats:
+        description: The number of linked content (e.g. sources)
+        type: integer
+        minimum: 0
+
+  collectionName:
+    description: Name of the collection
+    type: string
+    example: Plansammlung
+
+  institutionName:
+    description: Name of the institution
+    type: string
+    example: Landesamt für Denkmalpflege Sachsen, Dresden
+
+  institutionAbbr:
+      description: Abbreviation of the institution
+      type: string
+      example: LfDS

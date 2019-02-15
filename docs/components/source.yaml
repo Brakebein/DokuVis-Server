@@ -194,25 +194,21 @@ schemas:
             nullable: true
             example: M 8 III Bl. ?
           collection:
-            description: Name of the collection
-            type: string
-            nullable: true
-            example: Plansammlung
+            allOf:
+              - $ref: archive.yaml#/schemas/collectionName
+              - nullable: true
           institution:
-            description: Name of the institution
-            type: string
-            nullable: true
-            example: Landesamt für Denkmalpflege Sachsen, Dresden
+            allOf:
+              - $ref: archive.yaml#/schemas/institutionName
+              - nullable: true
           institutionAbbr:
-            description: Abbreviation of the institution
-            type: string
-            nullable: true
-            example: LfDS
+            allOf:
+              - $ref: archive.yaml#/schemas/institutionAbbr
+              - nullable: true
       author:
-        description: Name of the author
-        type: string
-        nullable: true
-        example: Zacharias Longuelune
+        allOf:
+          - $ref: author.yaml#/schemas/name
+          - nullable: true
       created:
         description: Information about who uploaded the source
         type: object
@@ -318,8 +314,7 @@ schemas:
         type: string
         format: binary
       author:
-        description: Name of the author
-        type: string
+        $ref: author.yaml#/schemas/name
       creationDate:
         description: Date at which the source has been created
         type: string
