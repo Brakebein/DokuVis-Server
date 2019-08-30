@@ -123,6 +123,7 @@ module.exports = {
 
 				const query =	// project
 					`CREATE (proj:E7:${prj} {content: {master}}),
+					(root:E22:${prj} {content:"e22_root_master"}),
 					(tproj:E55:${prj} {content:"project"}),
 					(tsubproj:E55:${prj} {content:"subproject"}),
 					(tpdesc:E55:${prj} {content:"projDesc"}),
