@@ -16,6 +16,7 @@ info:
 
     * **510** status code incorrectly used. In case of missing data in request body, server should return status code **400** or **422**.
     * Only one authentication header should be required.
+    * More uniform responses
     * ...
 
     # Authentication
@@ -49,7 +50,8 @@ tags:
   - name: Archive
     description: An archive consists of an collection, where a source can be part of, and its associated institution.
   - name: Comment
-    description: Comment that can be attached to a model, source, or task.
+    description: Comment that can be attached to a model, source, or task.<br/>Responses are not very uniform yet. This should be improved.
+
 
 x-tagGroups:
   - name: User Management
@@ -123,6 +125,8 @@ paths:
     $ref: components/comment.yaml#/path
   /auth/project/:prj/:subprj/comment/{id}:
     $ref: components/comment.yaml#/pathParam
+  /auth/project/:prj/:subprj/comment/target/{id}:
+    $ref: components/comment.yaml#/pathTarget
 
 components:
   securitySchemes:
