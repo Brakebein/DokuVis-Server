@@ -1,0 +1,119 @@
+openapi: 3.0.2
+
+# /auth/project/{prj}/author
+path:
+  parameters:
+    - $ref: project.yaml#/parameter
+  get:
+    tags: [Author]
+    summary: Get all authors in this project
+    responses:
+      '200':
+        description: List of authors.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/schemas/default'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+  post:
+    tags: [Author]
+    summary: Create new author entry
+    description: This creates a new author entry unless there isn't already an entry with the same name.
+    requestBody:
+      $ref: '#/requestBody'
+    responses:
+      '200':
+        $ref: '#/response'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+      '510':
+        $ref: ../responses.yaml#/MissingData
+
+# /auth/project/{prj}/author/{id}
+pathParam:
+  parameters:
+    - $ref: project.yaml#/parameter
+    - description: Author ID
+      name: id
+      in: path
+      required: true
+  get:
+    tags: [Author]
+    summary: Get author entry
+    responses:
+      '200':
+        $ref: '#/response'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+  put:
+    tags: [Author]
+    summary: Update author name
+    requestBody:
+      $ref: '#/requestBody'
+    responses:
+      '200':
+        $ref: '#/response'
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+      '510':
+        $ref: ../responses.yaml#/MissingData
+  delete:
+    tags: [Author]
+    summary: Delete author entry
+    responses:
+      '200':
+        description: Notification about successful deleted entry.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: Author with ID <id> deleted
+      '500':
+        $ref: ../responses.yaml#/GeneralError
+
+# components
+requestBody:
+  content:
+    application/json:
+      schema:
+        required:
+          - name
+        properties:
+          name:
+            $ref: '#/schemas/name'
+
+response:
+  description: Default Author response
+  content:
+    application/json:
+      schema:
+        $ref: '#/schemas/default'
+
+schemas:
+  default:
+    description: Author metadata
+    type: object
+    properties:
+      id:
+        description: Author ID
+        type: string
+      nodeId:
+        description: Internal Neo4j node ID. (This is actually unneccessary information and should be removed. It has been originally been used for Graph Search feature.)
+        type: integer
+      name:
+        $ref: '#/schemas/name'
+      linkStats:
+        description: The number of linked content (e.g. sources)
+        type: integer
+        minimum: 0
+
+  name:
+    description: Name of the author
+    type: string
+    example: Zacharias Longuelune

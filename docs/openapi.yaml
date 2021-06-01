@@ -16,6 +16,7 @@ info:
 
     * **510** status code incorrectly used. In case of missing data in request body, server should return status code **400** or **422**.
     * Only one authentication header should be required.
+    * More uniform responses
     * ...
 
     # Authentication
@@ -44,6 +45,13 @@ tags:
     description: Information pieces to add more contextual information to the project/subproject.
   - name: Source
     description: Sources like plans, images, texts, etc.
+  - name: Author
+    description: Authors in this context are persons that created sources and alike.
+  - name: Archive
+    description: An archive consists of an collection, where a source can be part of, and its associated institution.
+  - name: Comment
+    description: Comment that can be attached to a model, source, or task.<br/>Responses are not very uniform yet. This should be improved.
+
 
 x-tagGroups:
   - name: User Management
@@ -57,6 +65,9 @@ x-tagGroups:
   - name: Content
     tags:
       - Source
+      - Author
+      - Archive
+      - Comment
 
 paths:
   # Auth
@@ -96,6 +107,26 @@ paths:
     $ref: components/source.yaml#/pathFileUpdate
   /auth/project/{prj}/{subprj}/source/{id}/spatial:
     $ref: components/source.yaml#/pathSpatial
+
+  # Author
+  /auth/project/{prj}/author:
+    $ref: components/author.yaml#/path
+  /auth/project/{prj}/author/{id}:
+    $ref: components/author.yaml#/pathParam
+
+  # Archive
+  /auth/project/{prj}/archive:
+    $ref: components/archive.yaml#/path
+  /auth/project/{prj}/archive/{id}:
+    $ref: components/archive.yaml#/pathParam
+
+  # Comment
+  /auth/project/:prj/:subprj/comment:
+    $ref: components/comment.yaml#/path
+  /auth/project/:prj/:subprj/comment/{id}:
+    $ref: components/comment.yaml#/pathParam
+  /auth/project/:prj/:subprj/comment/target/{id}:
+    $ref: components/comment.yaml#/pathTarget
 
 components:
   securitySchemes:
