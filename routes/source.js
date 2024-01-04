@@ -176,7 +176,7 @@ module.exports = {
 		fs.ensureDirAsync(path)
 			.then(function () {
 				// move uploaded file into folder
-				return fs.renameAsync(req.file.path, path + filename);
+				return fs.moveAsync(req.file.path, path + filename);
 			})
 			.then(function () {
 
@@ -689,7 +689,7 @@ module.exports = {
 			})
 			.then(function () {
 				// move uploaded file into folder
-				return fs.renameAsync(req.file.path, path + filename);
+				return fs.moveAsync(req.file.path, path + filename);
 			})
 			.then(function () {
 				if (sourceType === 'text') {

@@ -48,7 +48,7 @@ module.exports = function (req, res) {
 	fs.ensureDirAsync(path + 'maps/')
 		.then(function () {
 			// move uploaded file into folder
-			return fs.renameAsync(file.path, path + filename);
+			return fs.moveAsync(file.path, path + filename);
 		})
 		.catch(function (err) {
 			utils.error.server(res, err, '#source.create fs/exec @ ' + path + filename);
